@@ -30,7 +30,7 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
         });
 
         socket.on('kills', (kills: ARGKillEntry[]) => {
-            console.log(kills)
+            arg.add(kills);
         });
         socket.on('disconnect', () => {
             isConnected = false;

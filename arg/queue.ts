@@ -8,6 +8,9 @@
 
 import { SimpleWebSocketServer } from "simple-websockets-server";
 import { MIRVPGL } from "./hlae";
+import { Connection } from "node-vmix";
+
+const vMix = new Connection("localhost");
 
 const RADIUS_TIME = 1500;
 const now = () => (new Date()).getTime();
@@ -24,7 +27,7 @@ export interface ARGKillEntry {
 
 export interface Swap {
     kill: ARGKillEntry,
-    timeout: NodeJS.Timeout,
+    timeouts: NodeJS.Timeout[],
 }
 
 const isKillBetter = (killToCheck: ARGKillEntry, killToCompare: ARGKillEntry, allKills: ARGKillEntry[]) => {
@@ -74,29 +77,53 @@ export class ARGQueue {
         this.pgl.execute(`spec_player_by_name ${name}`);
     }
 
-    generateSwap = (kill: ARGKillEntry) => {
-        const timeToExecute = kill.timestamp - RADIUS_TIME - now();
+    private generateSwap = (kill: ARGKillEntry, prev: ARGKillEntry | null, next: ARGKillEntry | null) => {
+        const timeToKill = kill.timestamp - now();
+        const timeToExecute = timeToKill - RADIUS_TIME;
+
+        const timeToMarkIn = timeToKill - RADIUS_TIME/2;
+        const timeToMarkOut = timeToKill + RADIUS_TIME/2;
+
         const timeout = setTimeout(() => {
             this.swapToPlayer(kill.name);
         }, timeToExecute);
 
-        this.swaps.push({ kill, timeout });
+        const timeouts = [ timeout ];
+
+        if(!prev || Math.abs(prev.timestamp - kill.timestamp) > RADIUS_TIME*2){
+            const markInTimeout = setTimeout(async () => {
+                await vMix.send({ Function: 'ReplayLive' });
+                await vMix.send({ Function: 'ReplayMarkIn' });
+            }, timeToMarkIn);
+
+            timeouts.push(markInTimeout);
+        }
+
+        if(!next || Math.abs(next.timestamp - kill.timestamp) > RADIUS_TIME*2){
+            const markOutTimeout = setTimeout(async () => {
+                await vMix.send({ Function: 'ReplayMarkOut' });
+            }, timeToMarkOut);
+
+            timeouts.push(markOutTimeout);
+        }
+
+        this.swaps.push({ kill, timeouts });
     }
 
-    regenerate = () => {
-        this.swaps.forEach(swap => clearTimeout(swap.timeout));
+    private regenerate = () => {
+        this.swaps.forEach(swap => swap.timeouts.forEach(timeout => clearTimeout(timeout)));
         this.swaps = [];
 
-        const interestingKills = this.kills.filter(kill => isKillWorthShowing(kill, this.kills));
+        const interestingKills = this.kills.filter(kill => isKillWorthShowing(kill, this.kills)).sort((a, b) => a.timestamp - b.timestamp);
 
-        interestingKills.forEach(this.generateSwap);
+        interestingKills.forEach((kill, index, array) => this.generateSwap(kill, array[index-1] || null, array[index+1] || null));
     }
 
-    add = (kill: ARGKillEntry) => {
-        const kills = [...this.kills, kill].filter(kill => kill.timestamp - 2000 >= now());
-        this.kills = kills;
+    add = (kills: ARGKillEntry[]) => {
+        const allKills = [...this.kills, ...kills].filter(kill => kill.timestamp - 2000 >= now());
+        this.kills = allKills;
 
         this.regenerate();
     }
 }
-// const arg = new ARGQueue();
+
