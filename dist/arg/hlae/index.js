@@ -46,8 +46,6 @@ var MIRVPGL = /** @class */ (function () {
     function MIRVPGL(server) {
         var _this = this;
         this.execute = function (config) {
-            console.log('exec', config);
-            console.log(!!_this.socket);
             if (!_this.socket)
                 return;
             _this.socket.send(new Uint8Array(Buffer.from("exec\0" + config + "\0", 'utf8')), { binary: true });

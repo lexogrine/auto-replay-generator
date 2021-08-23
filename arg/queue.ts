@@ -13,6 +13,7 @@ import { Connection } from "node-vmix";
 const vMix = new Connection("localhost");
 
 const RADIUS_TIME = 1500;
+const ENABLE_VMIX = true;
 const now = () => (new Date()).getTime();
 
 
@@ -73,38 +74,44 @@ export class ARGQueue {
         this.pgl = new MIRVPGL(server);
     }
 
-    swapToPlayer = (name: string) => {
-        this.pgl.execute(`spec_player_by_name ${name}`);
+    swapToPlayer = (player: { steamid?: string, name?: string }) => {
+        console.log('swapping to', player)
+        if(player.steamid){
+            this.pgl.execute(`spec_player_by_accountid ${player.steamid}`);
+        } else if(player.name){
+            this.pgl.execute(`spec_player_by_name ${player.name}`);
+        }
     }
 
     private generateSwap = (kill: ARGKillEntry, prev: ARGKillEntry | null, next: ARGKillEntry | null) => {
         const timeToKill = kill.timestamp - now();
         const timeToExecute = timeToKill - RADIUS_TIME;
 
-        const timeToMarkIn = timeToKill - RADIUS_TIME/2;
-        const timeToMarkOut = timeToKill + RADIUS_TIME/2;
-
         const timeout = setTimeout(() => {
-            this.swapToPlayer(kill.name);
+            this.swapToPlayer({ steamid: kill.killer });
         }, timeToExecute);
 
         const timeouts = [ timeout ];
+        if(ENABLE_VMIX){
+            const timeToMarkIn = timeToKill - RADIUS_TIME;
+            const timeToMarkOut = timeToKill + RADIUS_TIME;
 
-        if(!prev || Math.abs(prev.timestamp - kill.timestamp) > RADIUS_TIME*2){
-            const markInTimeout = setTimeout(async () => {
-                await vMix.send({ Function: 'ReplayLive' });
-                await vMix.send({ Function: 'ReplayMarkIn' });
-            }, timeToMarkIn);
-
-            timeouts.push(markInTimeout);
-        }
-
-        if(!next || Math.abs(next.timestamp - kill.timestamp) > RADIUS_TIME*2){
-            const markOutTimeout = setTimeout(async () => {
-                await vMix.send({ Function: 'ReplayMarkOut' });
-            }, timeToMarkOut);
-
-            timeouts.push(markOutTimeout);
+            if(!prev || Math.abs(prev.timestamp - kill.timestamp) > RADIUS_TIME*2){
+                const markInTimeout = setTimeout(async () => {
+                    await vMix.send({ Function: 'ReplayLive' });
+                    await vMix.send({ Function: 'ReplayMarkIn' });
+                }, timeToMarkIn);
+    
+                timeouts.push(markInTimeout);
+            }
+    
+            if(!next || Math.abs(next.timestamp - kill.timestamp) > RADIUS_TIME*2){
+                const markOutTimeout = setTimeout(async () => {
+                    await vMix.send({ Function: 'ReplayMarkOut' });
+                }, timeToMarkOut);
+    
+                timeouts.push(markOutTimeout);
+            }
         }
 
         this.swaps.push({ kill, timeouts });
@@ -117,6 +124,12 @@ export class ARGQueue {
         const interestingKills = this.kills.filter(kill => isKillWorthShowing(kill, this.kills)).sort((a, b) => a.timestamp - b.timestamp);
 
         interestingKills.forEach((kill, index, array) => this.generateSwap(kill, array[index-1] || null, array[index+1] || null));
+    }
+
+    clear = async () => {
+        for (let i = 0; i < 10; i++){
+            await vMix.send({ Function: 'ReplayDeleteLastEvent' });
+        }
     }
 
     add = (kills: ARGKillEntry[]) => {

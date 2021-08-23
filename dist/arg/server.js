@@ -46,34 +46,42 @@ var internal_ip_1 = __importDefault(require("internal-ip"));
 var queue_1 = require("./queue");
 var electron_1 = require("electron");
 exports.isConnected = false;
+var socketId = null;
 var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, void 0, function () {
     var port, ip, server, arg;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, get_port_1["default"]()];
+            case 0: return [4 /*yield*/, get_port_1["default"]({ port: [1300, 1302, 1304, 1305, 1310] })];
             case 1:
                 port = _a.sent();
                 ip = internal_ip_1["default"].v4.sync();
                 server = new simple_websockets_server_1.SimpleWebSocketServer({ port: port });
                 arg = new queue_1.ARGQueue(server);
                 electron_1.ipcMain.on('switchToPlayer', function (ev, name) {
-                    arg.swapToPlayer(name);
+                    arg.swapToPlayer({ name: name });
                 });
                 server.onConnection(function (socket) {
                     socket.on('register', function () {
+                        console.log('resgisterigngng');
                         if (exports.isConnected) {
+                            console.log('resgisterigngng#2');
                             socket._socket.close();
                             return;
                         }
+                        socketId = socket;
                         exports.isConnected = true;
                         win.webContents.send('argStatus', true);
+                        socket.send('registered');
                     });
                     socket.on('kills', function (kills) {
-                        console.log(kills);
+                        arg.add(kills);
                     });
+                    // socket.on('clear', arg.clear)
                     socket.on('disconnect', function () {
-                        exports.isConnected = false;
-                        win.webContents.send('argStatus', false);
+                        if (socketId === socket) {
+                            exports.isConnected = false;
+                            win.webContents.send('argStatus', false);
+                        }
                     });
                 });
                 return [2 /*return*/, { ip: ip, port: port }];
