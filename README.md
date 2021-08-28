@@ -1,11 +1,11 @@
 ![Lexogrine ARG](assets/githubLogo.png?raw=true)
 # Lexogrine Auto Replay Generator
 
-Lexogrine Auto Replay Generator is an extension for Lexogrine HUD Manager (2.3+), allowing users to automate replays during their CS:GO broadcasts using vMix
+Lexogrine Auto Replay Generator is an extension for Lexogrine HUD Manager (2.4+), allowing users to automate replays during their CS:GO broadcasts using vMix
 
 
 # Setup
-To use this properly, you need 2 PCs connected to differently delayed GOTVs of the same match (7 seconds of delay difference would be best). On PC#1 (live game) you should have Lexogrine HUD Manager 2.3 or newer, while PC#2 (delayed relative to PC#1) should handle vMix Instant Replays and have ARG installed. Additionally, PC#2 should be opened with HLAE, as this is crucial to switch between players.
+To use this properly, you need 2 PCs connected to differently delayed GOTVs of the same match (7 seconds of delay difference would be best). On PC#1 (live game) you should have Lexogrine HUD Manager 2.4 or newer, while PC#2 (delayed relative to PC#1) should handle vMix Instant Replays and have ARG installed. Additionally, PC#2 should be opened with HLAE, as this is crucial to switch between players.
 
 vMix setup is up to the user.
 
