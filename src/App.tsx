@@ -8,16 +8,14 @@ const { ipcRenderer } = window.require('electron');
 function App() {
 	const [status, setStatus] = useState(false);
 	const [address, setAddress] = useState('');
+	const [port, setPort] = useState(0);
 
-	const switchToOszten = () => {
-		ipcRenderer.send('switchToPlayer', 'h-k')
-	}
 
 	useEffect(() => {
 		setStatus(false);
-		ipcRenderer.on('address', (e: any, address: { ip:string, port: number}) => {
-			console.log('port',address.port)
-			setAddress(address.ip.split('.').map(Number).map(n => n.toString(16)).join('-')+"-"+address.port.toString(16))
+		ipcRenderer.on('address', (e: any, address: { ip: string, port: number }) => {
+			setPort(address.port);
+			setAddress(address.ip.split('.').map(Number).map(n => n.toString(16)).join('-') + "-" + address.port.toString(16))
 		});
 		ipcRenderer.on('argStatus', (e: any, status: boolean) => {
 			setStatus(status);
@@ -53,11 +51,15 @@ function App() {
 			<div className="App-container">
 				<main>
 					<p>Lexogrine Auto Replay Generator</p>
-					<p>
-						LHM Status ({address}):{' '}
-						<span className={status ? 'online' : 'offline'}>{status ? 'online' : 'offline'}</span>
-					</p>
-					<button onClick={switchToOszten}>SWITCH</button>
+					<p>Replayer ID: {address} (<span className={status ? 'online' : 'offline'}>{status ? 'online' : 'offline'}</span>)</p>
+					{
+						port ? (
+							<>
+								<p>Run this command in CS:GO:</p>
+								<code>mirv_pgl url &quot;ws://localhost:{port}&quot;; mirv_pgl start;</code>
+							</>
+						) : null
+					}
 				</main>
 			</div>
 		</div>

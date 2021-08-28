@@ -75,7 +75,6 @@ export class ARGQueue {
     }
 
     swapToPlayer = (player: { steamid?: string, name?: string }) => {
-        console.log('swapping to', player)
         if(player.steamid){
             this.pgl.execute(`spec_player_by_accountid ${player.steamid}`);
         } else if(player.name){

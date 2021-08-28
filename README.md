@@ -1,11 +1,22 @@
-![Lexogrine HUD Viewer](assets/githubLogo.png?raw=true)
-# Lexogrine HUD Viewer
+![Lexogrine ARG](assets/githubLogo.png?raw=true)
+# Lexogrine Auto Replay Generator
 
-Lexogrine HUD Viewer is an extension for Lexogrine HUD Manager (1.8+), allowing users to connect to a remote Lexogrine HUD Manager instance in the same network, receive CS:GO data from it and use HUDs remotely. All you have to do (provided you have a proper firewall configuration) is input the Viewer Code from your LHM instance and hit Connect.
+Lexogrine Auto Replay Generator is an extension for Lexogrine HUD Manager (2.3+), allowing users to automate replays during their CS:GO broadcasts using vMix
+
+
+# Setup
+To use this properly, you need 2 PCs connected to differently delayed GOTVs of the same match (7 seconds of delay difference would be best). On PC#1 (live game) you should have Lexogrine HUD Manager 2.3 or newer, while PC#2 (delayed relative to PC#1) should handle vMix Instant Replays and have ARG installed. Additionally, PC#2 should be opened with HLAE, as this is crucial to switch between players.
+
+vMix setup is up to the user.
+
+# Connecting
+
+To connect both PCs you just need to put ARGs ID to LHM and click connect. ARG app on PC#2 should update its status to online. After you connected both PCs to GOTV you should execute command shown by ARG in CS:GO's console on PC#2.
+
+If vMix's Instant Replay is correctly setup on PC#2, it should start changing observed player on its own, clipping kills, and playing it to output after round's end.
 
 ## Download
 
-[Latest release](https://github.com/lexogrine/hud-viewer/releases/latest)
+[Latest release](https://github.com/lexogrine/auto-replay-generator/releases/latest)
 ## Preview
-![Lexogrine HUD Viewer](assets/preview1.jpg?raw=true)
-![Lexogrine HUD Viewer](assets/preview2.jpg?raw=true)
+![Lexogrine ARG](assets/preview1.jpg?raw=true)

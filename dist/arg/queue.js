@@ -85,7 +85,6 @@ var ARGQueue = /** @class */ (function () {
     function ARGQueue(server) {
         var _this = this;
         this.swapToPlayer = function (player) {
-            console.log('swapping to', player);
             if (player.steamid) {
                 _this.pgl.execute("spec_player_by_accountid " + player.steamid);
             }
