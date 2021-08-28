@@ -132,6 +132,10 @@ export class ARGQueue {
         }
     }
 
+    show = async () => {
+        await vMix.send({ Function: 'ReplayPlayAllEventsToOutput' });
+    }
+
     add = (kills: ARGKillEntry[]) => {
         const allKills = [...this.kills, ...kills].filter(kill => kill.timestamp - 2000 >= now());
         this.kills = allKills;

@@ -161,6 +161,16 @@ var ARGQueue = /** @class */ (function () {
                 }
             });
         }); };
+        this.show = function () { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, vMix.send({ Function: 'ReplayPlayAllEventsToOutput' })];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); };
         this.add = function (kills) {
             var allKills = __spreadArray(__spreadArray([], _this.kills), kills).filter(function (kill) { return kill.timestamp - 2000 >= now(); });
             _this.kills = allKills;

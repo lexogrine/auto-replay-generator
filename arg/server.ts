@@ -35,7 +35,11 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
         socket.on('kills', (kills: ARGKillEntry[]) => {
             arg.add(kills);
         });
-        // socket.on('clear', arg.clear)
+        
+        socket.on('clearReplay', arg.clear);
+        
+        socket.on('showReplay', arg.show);
+
         socket.on('disconnect', () => {
             if (socketId === socket) {
                 isConnected = false;

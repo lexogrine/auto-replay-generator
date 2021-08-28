@@ -32,7 +32,6 @@ export class MIRVPGL {
 
 			socket.on('message', data => {
 				if (!(data instanceof Buffer)) {
-					console.log('not csgo');
 					return;
 				}
 				if (this.socket !== socket) {

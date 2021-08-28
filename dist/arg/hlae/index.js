@@ -65,7 +65,6 @@ var MIRVPGL = /** @class */ (function () {
                     var gameEventUnserializer = new GameEventUnserializer_1["default"](enrichments);
                     socket.on('message', function (data) {
                         if (!(data instanceof Buffer)) {
-                            console.log('not csgo');
                             return;
                         }
                         if (_this.socket !== socket) {
