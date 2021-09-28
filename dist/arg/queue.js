@@ -48,21 +48,62 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from) {
     return to;
 };
 exports.__esModule = true;
-exports.ARGQueue = void 0;
+exports.ARGQueue = exports.argConfig = void 0;
 var hlae_1 = require("./hlae");
 var node_vmix_1 = require("node-vmix");
+exports.argConfig = {
+    order: [
+        {
+            id: 'multikills',
+            active: true
+        },
+        {
+            id: 'headshots',
+            active: true
+        },
+        {
+            id: 'teamkill',
+            active: false
+        }
+    ]
+};
 var vMix = new node_vmix_1.Connection("localhost");
 var RADIUS_TIME = 1500;
 var ENABLE_VMIX = true;
 var now = function () { return (new Date()).getTime(); };
-var isKillBetter = function (killToCheck, killToCompare, allKills) {
-    var killsOfPlayerOne = allKills.filter(function (kill) { return kill.killer === killToCheck.killer; }).length;
-    var killsOfPlayerTwo = allKills.filter(function (kill) { return kill.killer === killToCompare.killer; }).length;
-    if (killsOfPlayerOne > killsOfPlayerTwo) {
-        return true;
+var comparisons = {
+    multikills: function (killToCheck, killToCompare, allKills) {
+        var killsOfPlayerOne = allKills.filter(function (kill) { return kill.killer === killToCheck.killer; }).length;
+        var killsOfPlayerTwo = allKills.filter(function (kill) { return kill.killer === killToCompare.killer; }).length;
+        if (killsOfPlayerOne > killsOfPlayerTwo) {
+            return true;
+        }
+        else if (killsOfPlayerTwo > killsOfPlayerOne) {
+            return false;
+        }
+        return null;
+    },
+    headshots: function (killToCheck, killToCompare) {
+        if (killToCheck.headshot === killToCompare.headshot)
+            return null;
+        return killToCheck.headshot;
+    },
+    teamkill: function (killToCheck, killToCompare) {
+        if (killToCheck.teamkill === killToCompare.teamkill)
+            return null;
+        return killToCheck.teamkill;
     }
-    else if (killsOfPlayerTwo > killsOfPlayerOne) {
-        return false;
+};
+var isKillBetter = function (killToCheck, killToCompare, allKills) {
+    var order = exports.argConfig.order.filter(function (item) { return item.active; }).map(function (item) { return item.id; });
+    for (var _i = 0, order_1 = order; _i < order_1.length; _i++) {
+        var orderType = order_1[_i];
+        if (orderType in comparisons) {
+            var result = comparisons[orderType](killToCheck, killToCompare, allKills);
+            if (result === null)
+                continue;
+            return result;
+        }
     }
     return allKills.indexOf(killToCheck) < allKills.indexOf(killToCompare);
 };

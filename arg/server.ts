@@ -2,9 +2,14 @@ import { SimpleWebSocketServer } from 'simple-websockets-server';
 import getPort from 'get-port';
 import internalIp from 'internal-ip';
 import { BrowserWindow } from 'electron/main';
-import { ARGKillEntry, ARGQueue } from './queue';
+import { ARGKillEntry, ARGQueue, argConfig } from './queue';
 import { ipcMain } from 'electron';
 
+export interface Item {
+	id: string;
+	text: string;
+	active: boolean;
+}
 
 export let isConnected = false;
 let socketId = null;
@@ -21,10 +26,13 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
     });
 
     server.onConnection(socket => {
-        socket.on('register', () => {
+        socket.on('register', (order?: Item[]) => {
             if (isConnected) {
                 socket._socket.close();
                 return;
+            }
+            if(order && Array.isArray(order)){
+                argConfig.order = order;
             }
             socketId = socket;
             isConnected = true;
@@ -36,6 +44,10 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
             arg.add(kills);
         });
         
+        socket.on('config', (order: Item[]) => {
+            argConfig.order = order;
+        });
+
         socket.on('clearReplay', arg.clear);
         
         socket.on('showReplay', arg.show);

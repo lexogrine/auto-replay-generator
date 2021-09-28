@@ -61,10 +61,13 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                     arg.swapToPlayer({ name: name });
                 });
                 server.onConnection(function (socket) {
-                    socket.on('register', function () {
+                    socket.on('register', function (order) {
                         if (exports.isConnected) {
                             socket._socket.close();
                             return;
+                        }
+                        if (order && Array.isArray(order)) {
+                            queue_1.argConfig.order = order;
                         }
                         socketId = socket;
                         exports.isConnected = true;
@@ -73,6 +76,9 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                     });
                     socket.on('kills', function (kills) {
                         arg.add(kills);
+                    });
+                    socket.on('config', function (order) {
+                        queue_1.argConfig.order = order;
                     });
                     socket.on('clearReplay', arg.clear);
                     socket.on('showReplay', arg.show);

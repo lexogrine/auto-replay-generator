@@ -9,6 +9,8 @@ To use this properly, you need 2 PCs connected to differently delayed GOTVs of t
 
 vMix setup is up to the user.
 
+LARG 1.1 requires LHM 2.5.2+
+
 # Connecting
 
 To connect both PCs you just need to put ARGs ID to LHM and click connect. ARG app on PC#2 should update its status to online. After you connected both PCs to GOTV you should execute command shown by ARG in CS:GO's console on PC#2.

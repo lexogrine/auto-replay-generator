@@ -10,6 +10,24 @@ import { SimpleWebSocketServer } from "simple-websockets-server";
 import { MIRVPGL } from "./hlae";
 import { Connection } from "node-vmix";
 
+
+export const argConfig = {
+    order: [
+		{
+			id: 'multikills',
+			active: true
+		},
+		{
+			id: 'headshots',
+			active: true
+		},
+		{
+			id: 'teamkill',
+			active: false
+		}
+	]
+}
+
 const vMix = new Connection("localhost");
 
 const RADIUS_TIME = 1500;
@@ -24,6 +42,8 @@ export interface ARGKillEntry {
 	killerHealth: number,
 	newKills: number,
     name: string
+	teamkill: boolean;
+	headshot: boolean;
 }
 
 export interface Swap {
@@ -31,14 +51,40 @@ export interface Swap {
     timeouts: NodeJS.Timeout[],
 }
 
-const isKillBetter = (killToCheck: ARGKillEntry, killToCompare: ARGKillEntry, allKills: ARGKillEntry[]) => {
-    const killsOfPlayerOne = allKills.filter(kill => kill.killer === killToCheck.killer).length;
-    const killsOfPlayerTwo = allKills.filter(kill => kill.killer === killToCompare.killer).length;
+const comparisons: { [x: string]: (killToCheck: ARGKillEntry, killToCompare: ARGKillEntry, allKills: ARGKillEntry[]) => boolean | null } = {
+    multikills: (killToCheck: ARGKillEntry, killToCompare: ARGKillEntry, allKills: ARGKillEntry[]) => {
+        const killsOfPlayerOne = allKills.filter(kill => kill.killer === killToCheck.killer).length;
+        const killsOfPlayerTwo = allKills.filter(kill => kill.killer === killToCompare.killer).length;
 
-    if(killsOfPlayerOne > killsOfPlayerTwo){
-        return true;
-    } else if(killsOfPlayerTwo > killsOfPlayerOne){
-        return false;
+        if(killsOfPlayerOne > killsOfPlayerTwo){
+            return true;
+        } else if(killsOfPlayerTwo > killsOfPlayerOne){
+            return false;
+        }
+
+        return null;
+    },
+    headshots: (killToCheck: ARGKillEntry, killToCompare: ARGKillEntry) => {
+        if(killToCheck.headshot === killToCompare.headshot) return null;
+
+        return killToCheck.headshot;
+    },
+    teamkill: (killToCheck: ARGKillEntry, killToCompare: ARGKillEntry) => {
+        if(killToCheck.teamkill === killToCompare.teamkill) return null;
+
+        return killToCheck.teamkill;
+    },
+}
+
+const isKillBetter = (killToCheck: ARGKillEntry, killToCompare: ARGKillEntry, allKills: ARGKillEntry[]) => {
+    const order = argConfig.order.filter(item => item.active).map(item => item.id);
+
+    for(const orderType of order){
+        if(orderType in comparisons){
+            const result = comparisons[orderType](killToCheck, killToCompare, allKills);
+            if(result === null) continue;
+            return result;
+        }
     }
 
     return allKills.indexOf(killToCheck) < allKills.indexOf(killToCompare);
