@@ -42,10 +42,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArray = (this && this.__spreadArray) || function (to, from) {
-    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-        to[j] = from[i];
-    return to;
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
 };
 exports.__esModule = true;
 exports.ARGQueue = exports.argConfig = void 0;
@@ -65,7 +69,8 @@ exports.argConfig = {
             id: 'teamkill',
             active: false
         }
-    ]
+    ],
+    saveClips: false
 };
 var vMix = new node_vmix_1.Connection("localhost");
 var RADIUS_TIME = 1500;
@@ -127,10 +132,10 @@ var ARGQueue = /** @class */ (function () {
         var _this = this;
         this.swapToPlayer = function (player) {
             if (player.steamid) {
-                _this.pgl.execute("spec_player_by_accountid " + player.steamid);
+                _this.pgl.execute("spec_player_by_accountid ".concat(player.steamid));
             }
             else if (player.name) {
-                _this.pgl.execute("spec_player_by_name " + player.name);
+                _this.pgl.execute("spec_player_by_name ".concat(player.name));
             }
         };
         this.generateSwap = function (kill, prev, next) {
@@ -189,15 +194,20 @@ var ARGQueue = /** @class */ (function () {
                         i = 0;
                         _a.label = 1;
                     case 1:
-                        if (!(i < 10)) return [3 /*break*/, 4];
-                        return [4 /*yield*/, vMix.send({ Function: 'ReplayDeleteLastEvent' })];
+                        if (!(i < 10)) return [3 /*break*/, 6];
+                        if (!exports.argConfig.saveClips) return [3 /*break*/, 3];
+                        return [4 /*yield*/, vMix.send({ Function: 'ReplayMoveLastEvent', Value: '9' })];
                     case 2:
                         _a.sent();
-                        _a.label = 3;
-                    case 3:
+                        return [3 /*break*/, 5];
+                    case 3: return [4 /*yield*/, vMix.send({ Function: 'ReplayDeleteLastEvent' })];
+                    case 4:
+                        _a.sent();
+                        _a.label = 5;
+                    case 5:
                         i++;
                         return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
+                    case 6: return [2 /*return*/];
                 }
             });
         }); };
@@ -212,7 +222,7 @@ var ARGQueue = /** @class */ (function () {
             });
         }); };
         this.add = function (kills) {
-            var allKills = __spreadArray(__spreadArray([], _this.kills), kills).filter(function (kill) { return kill.timestamp - 2000 >= now(); });
+            var allKills = __spreadArray(__spreadArray([], _this.kills, true), kills, true).filter(function (kill) { return kill.timestamp - 2000 >= now(); });
             _this.kills = allKills;
             _this.regenerate();
         };

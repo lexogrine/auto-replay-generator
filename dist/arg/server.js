@@ -51,7 +51,7 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
     var port, ip, server, arg;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, get_port_1["default"]({ port: [1300, 1302, 1304, 1305, 1310] })];
+            case 0: return [4 /*yield*/, (0, get_port_1["default"])({ port: [1300, 1302, 1304, 1305, 1310] })];
             case 1:
                 port = _a.sent();
                 ip = internal_ip_1["default"].v4.sync();
@@ -61,7 +61,7 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                     arg.swapToPlayer({ name: name });
                 });
                 server.onConnection(function (socket) {
-                    socket.on('register', function (order) {
+                    socket.on('register', function (order, saveClips) {
                         if (exports.isConnected) {
                             socket._socket.close();
                             return;
@@ -69,6 +69,7 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                         if (order && Array.isArray(order)) {
                             queue_1.argConfig.order = order;
                         }
+                        queue_1.argConfig.saveClips = !!saveClips;
                         socketId = socket;
                         exports.isConnected = true;
                         win.webContents.send('argStatus', true);
@@ -79,6 +80,9 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                     });
                     socket.on('config', function (order) {
                         queue_1.argConfig.order = order;
+                    });
+                    socket.on('saveClips', function (saveClips) {
+                        queue_1.argConfig.saveClips = saveClips;
                     });
                     socket.on('clearReplay', arg.clear);
                     socket.on('showReplay', arg.show);

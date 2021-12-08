@@ -26,7 +26,7 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
     });
 
     server.onConnection(socket => {
-        socket.on('register', (order?: Item[]) => {
+        socket.on('register', (order?: Item[], saveClips?: boolean) => {
             if (isConnected) {
                 socket._socket.close();
                 return;
@@ -34,6 +34,7 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
             if(order && Array.isArray(order)){
                 argConfig.order = order;
             }
+            argConfig.saveClips = !!saveClips;
             socketId = socket;
             isConnected = true;
             win.webContents.send('argStatus', true);
@@ -46,6 +47,10 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
         
         socket.on('config', (order: Item[]) => {
             argConfig.order = order;
+        });
+
+        socket.on('saveClips', (saveClips: boolean) => {
+            argConfig.saveClips = saveClips;
         });
 
         socket.on('clearReplay', arg.clear);

@@ -25,7 +25,8 @@ export const argConfig = {
 			id: 'teamkill',
 			active: false
 		}
-	]
+	],
+    saveClips: false
 }
 
 const vMix = new Connection("localhost");
@@ -173,7 +174,11 @@ export class ARGQueue {
 
     clear = async () => {
         for (let i = 0; i < 10; i++){
-            await vMix.send({ Function: 'ReplayDeleteLastEvent' });
+            if(argConfig.saveClips){
+                await vMix.send({ Function: 'ReplayMoveLastEvent', Value: '9' });
+            } else {
+                await vMix.send({ Function: 'ReplayDeleteLastEvent' });
+            }
         }
     }
 
