@@ -42,7 +42,7 @@ const createMainWindow = async () => {
 		ev.reply('address', address);
 	});
 	ipcMain.on('getStatus', ev => {
-		ev.reply('status', isConnected)
+		ev.reply('status', isConnected);
 	});
 
 	ipcMain.on('min', () => {

@@ -35,7 +35,7 @@ export class MIRVPGL {
 					return;
 				}
 				if (this.socket !== socket) {
-					if(this.socket) this.socket.close();
+					if (this.socket) this.socket.close();
 					this.socket = socket;
 				}
 				const bufferReader = new BufferReader(Buffer.from(data));
@@ -88,8 +88,8 @@ export class MIRVPGL {
 						}
 						gameEventUnserializer.unserialize(bufferReader);
 					}
-				} catch (err) { }
+				} catch (err) {}
 			});
-		})
+		});
 	};
 }
