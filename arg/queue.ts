@@ -26,12 +26,13 @@ export const argConfig = {
 			active: false
 		}
 	],
+    preTime: 1500,
+    postTime: 1500,
     saveClips: false
 }
 
 const vMix = new Connection("localhost");
 
-const RADIUS_TIME = 1500;
 const ENABLE_VMIX = true;
 const now = () => (new Date()).getTime();
 
@@ -42,6 +43,8 @@ export interface ARGKillEntry {
 	round: number,
 	killerHealth: number,
 	newKills: number,
+    weapon?: string;
+    victim?: string;
     name: string
 	teamkill: boolean;
 	headshot: boolean;
@@ -94,7 +97,7 @@ const isKillBetter = (killToCheck: ARGKillEntry, killToCompare: ARGKillEntry, al
 const isKillWorthShowing = (kill: ARGKillEntry, allKills: ARGKillEntry[]) => {
     if(kill.killerHealth === 0) return false;
 
-    const conflictingKills = allKills.filter(exampleKill => exampleKill !== kill && exampleKill.killer !== kill.killer && exampleKill.killerHealth > 0).filter(exampleKill => Math.abs(kill.timestamp - exampleKill.timestamp) <= RADIUS_TIME*2);
+    const conflictingKills = allKills.filter(exampleKill => exampleKill !== kill && exampleKill.killer !== kill.killer && exampleKill.killerHealth > 0).filter(exampleKill => Math.abs(kill.timestamp - exampleKill.timestamp) <= ( argConfig.preTime + argConfig.postTime ));
    
     if(!conflictingKills.length) return true;
 
@@ -131,18 +134,23 @@ export class ARGQueue {
 
     private generateSwap = (kill: ARGKillEntry, prev: ARGKillEntry | null, next: ARGKillEntry | null) => {
         const timeToKill = kill.timestamp - now();
-        const timeToExecute = timeToKill - RADIUS_TIME;
+        const timeToExecute = timeToKill - argConfig.preTime;
 
         const timeout = setTimeout(() => {
-            this.swapToPlayer({ steamid: kill.killer });
+            if(kill.weapon === "hegrenade" && kill.victim){
+                this.swapToPlayer({ steamid: kill.victim });
+            } else {
+                this.swapToPlayer({ steamid: kill.killer });
+            }
+            
         }, timeToExecute);
 
         const timeouts = [ timeout ];
         if(ENABLE_VMIX){
-            const timeToMarkIn = timeToKill - RADIUS_TIME;
-            const timeToMarkOut = timeToKill + RADIUS_TIME;
+            const timeToMarkIn = timeToKill - argConfig.preTime;
+            const timeToMarkOut = timeToKill + argConfig.postTime;
 
-            if(!prev || Math.abs(prev.timestamp - kill.timestamp) > RADIUS_TIME*2){
+            if(!prev || Math.abs(prev.timestamp - kill.timestamp) > ( argConfig.preTime + argConfig.postTime )){
                 const markInTimeout = setTimeout(async () => {
                     await vMix.send({ Function: 'ReplayLive' });
                     await vMix.send({ Function: 'ReplayMarkIn' });
@@ -151,7 +159,7 @@ export class ARGQueue {
                 timeouts.push(markInTimeout);
             }
     
-            if(!next || Math.abs(next.timestamp - kill.timestamp) > RADIUS_TIME*2){
+            if(!next || Math.abs(next.timestamp - kill.timestamp) > ( argConfig.preTime + argConfig.postTime )){
                 const markOutTimeout = setTimeout(async () => {
                     await vMix.send({ Function: 'ReplayMarkOut' });
                 }, timeToMarkOut);
@@ -173,6 +181,9 @@ export class ARGQueue {
     }
 
     clear = async () => {
+        setTimeout(() => {
+            vMix.send({ Function: 'ReplayStopEvents' })
+        }, 2000);
         for (let i = 0; i < 10; i++){
             if(argConfig.saveClips){
                 await vMix.send({ Function: 'ReplayMoveLastEvent', Value: '9' });

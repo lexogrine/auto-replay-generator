@@ -42,7 +42,7 @@ var GameEventDescription = /** @class */ (function () {
                 }
                 result.keys[key.name] = keyValue;
                 if (_this.enrichments && _this.enrichments.includes(keyName)) {
-                    result.keys[key.name] = (0, UseridEnrichment_1.unserializeEnrichment)(bufferReader, keyValue);
+                    result.keys[key.name] = UseridEnrichment_1.unserializeEnrichment(bufferReader, keyValue);
                 }
             }
             return result;

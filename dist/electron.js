@@ -79,7 +79,7 @@ var createMainWindow = function () { return __awaiter(void 0, void 0, void 0, fu
                     minHeight: 435,
                     width: 775
                 });
-                return [4 /*yield*/, (0, server_1.startWebSocketServer)(win)];
+                return [4 /*yield*/, server_1.startWebSocketServer(win)];
             case 1:
                 address = _a.sent();
                 electron_1.ipcMain.on('getAddress', function (ev) {
@@ -109,7 +109,7 @@ var createMainWindow = function () { return __awaiter(void 0, void 0, void 0, fu
                 });
                 // win.setMenu(null);
                 win.setMenuBarVisibility(!exports.isDev);
-                win.loadURL(exports.isDev ? 'http://localhost:3023' : "file://".concat(__dirname, "/build/index.html"));
+                win.loadURL(exports.isDev ? 'http://localhost:3023' : "file://" + __dirname + "/build/index.html");
                 win.on('close', function () {
                     win = null;
                     electron_1.app.quit();

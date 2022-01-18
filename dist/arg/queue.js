@@ -42,14 +42,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
 };
 exports.__esModule = true;
 exports.ARGQueue = exports.argConfig = void 0;
@@ -70,10 +68,11 @@ exports.argConfig = {
             active: false
         }
     ],
+    preTime: 1500,
+    postTime: 1500,
     saveClips: false
 };
 var vMix = new node_vmix_1.Connection("localhost");
-var RADIUS_TIME = 1500;
 var ENABLE_VMIX = true;
 var now = function () { return (new Date()).getTime(); };
 var comparisons = {
@@ -115,7 +114,7 @@ var isKillBetter = function (killToCheck, killToCompare, allKills) {
 var isKillWorthShowing = function (kill, allKills) {
     if (kill.killerHealth === 0)
         return false;
-    var conflictingKills = allKills.filter(function (exampleKill) { return exampleKill !== kill && exampleKill.killer !== kill.killer && exampleKill.killerHealth > 0; }).filter(function (exampleKill) { return Math.abs(kill.timestamp - exampleKill.timestamp) <= RADIUS_TIME * 2; });
+    var conflictingKills = allKills.filter(function (exampleKill) { return exampleKill !== kill && exampleKill.killer !== kill.killer && exampleKill.killerHealth > 0; }).filter(function (exampleKill) { return Math.abs(kill.timestamp - exampleKill.timestamp) <= (exports.argConfig.preTime + exports.argConfig.postTime); });
     if (!conflictingKills.length)
         return true;
     var conflictingAndBetterKills = conflictingKills.filter(function (conflicting) { return isKillBetter(kill, conflicting, allKills); });
@@ -132,23 +131,28 @@ var ARGQueue = /** @class */ (function () {
         var _this = this;
         this.swapToPlayer = function (player) {
             if (player.steamid) {
-                _this.pgl.execute("spec_player_by_accountid ".concat(player.steamid));
+                _this.pgl.execute("spec_player_by_accountid " + player.steamid);
             }
             else if (player.name) {
-                _this.pgl.execute("spec_player_by_name ".concat(player.name));
+                _this.pgl.execute("spec_player_by_name " + player.name);
             }
         };
         this.generateSwap = function (kill, prev, next) {
             var timeToKill = kill.timestamp - now();
-            var timeToExecute = timeToKill - RADIUS_TIME;
+            var timeToExecute = timeToKill - exports.argConfig.preTime;
             var timeout = setTimeout(function () {
-                _this.swapToPlayer({ steamid: kill.killer });
+                if (kill.weapon === "hegrenade" && kill.victim) {
+                    _this.swapToPlayer({ steamid: kill.victim });
+                }
+                else {
+                    _this.swapToPlayer({ steamid: kill.killer });
+                }
             }, timeToExecute);
             var timeouts = [timeout];
             if (ENABLE_VMIX) {
-                var timeToMarkIn = timeToKill - RADIUS_TIME;
-                var timeToMarkOut = timeToKill + RADIUS_TIME;
-                if (!prev || Math.abs(prev.timestamp - kill.timestamp) > RADIUS_TIME * 2) {
+                var timeToMarkIn = timeToKill - exports.argConfig.preTime;
+                var timeToMarkOut = timeToKill + exports.argConfig.postTime;
+                if (!prev || Math.abs(prev.timestamp - kill.timestamp) > (exports.argConfig.preTime + exports.argConfig.postTime)) {
                     var markInTimeout = setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
@@ -164,7 +168,7 @@ var ARGQueue = /** @class */ (function () {
                     }); }, timeToMarkIn);
                     timeouts.push(markInTimeout);
                 }
-                if (!next || Math.abs(next.timestamp - kill.timestamp) > RADIUS_TIME * 2) {
+                if (!next || Math.abs(next.timestamp - kill.timestamp) > (exports.argConfig.preTime + exports.argConfig.postTime)) {
                     var markOutTimeout = setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
@@ -191,6 +195,9 @@ var ARGQueue = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        setTimeout(function () {
+                            vMix.send({ Function: 'ReplayStopEvents' });
+                        }, 2000);
                         i = 0;
                         _a.label = 1;
                     case 1:
@@ -222,7 +229,7 @@ var ARGQueue = /** @class */ (function () {
             });
         }); };
         this.add = function (kills) {
-            var allKills = __spreadArray(__spreadArray([], _this.kills, true), kills, true).filter(function (kill) { return kill.timestamp - 2000 >= now(); });
+            var allKills = __spreadArrays(_this.kills, kills).filter(function (kill) { return kill.timestamp - 2000 >= now(); });
             _this.kills = allKills;
             _this.regenerate();
         };

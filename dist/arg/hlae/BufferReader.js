@@ -20,7 +20,7 @@ var BufferReader = /** @class */ (function () {
         this.readBigUInt64LE = function () {
             var lo = _this.readUInt32LE();
             var hi = _this.readUInt32LE();
-            return (0, big_integer_1["default"])(lo).or((0, big_integer_1["default"])(hi).shiftLeft(32));
+            return big_integer_1["default"](lo).or(big_integer_1["default"](hi).shiftLeft(32));
         };
         this.readUInt32LE = function () {
             var result = _this.buffer.readUInt32LE(_this.index);

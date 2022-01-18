@@ -26,7 +26,7 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
     });
 
     server.onConnection(socket => {
-        socket.on('register', (order?: Item[], saveClips?: boolean) => {
+        socket.on('register', (order: Item[], saveClips: boolean, safeBand: { preTime: number, postTime: number }) => {
             if (isConnected) {
                 socket._socket.close();
                 return;
@@ -35,6 +35,8 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
                 argConfig.order = order;
             }
             argConfig.saveClips = !!saveClips;
+            argConfig.preTime = safeBand.preTime;
+            argConfig.postTime = safeBand.postTime;
             socketId = socket;
             isConnected = true;
             win.webContents.send('argStatus', true);
@@ -45,8 +47,11 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
             arg.add(kills);
         });
         
-        socket.on('config', (order: Item[]) => {
+        socket.on('config', (order: Item[], saveClips: boolean, safeBand: { preTime: number, postTime: number }) => {
             argConfig.order = order;
+            argConfig.saveClips = saveClips;
+            argConfig.preTime = safeBand.preTime;
+            argConfig.postTime = safeBand.postTime;
         });
 
         socket.on('saveClips', (saveClips: boolean) => {

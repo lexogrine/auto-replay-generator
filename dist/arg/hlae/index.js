@@ -48,7 +48,7 @@ var MIRVPGL = /** @class */ (function () {
         this.execute = function (config) {
             if (!_this.socket)
                 return;
-            _this.socket.send(new Uint8Array(Buffer.from("exec\0".concat(config, "\0"), 'utf8')), { binary: true });
+            _this.socket.send(new Uint8Array(Buffer.from("exec\0" + config + "\0", 'utf8')), { binary: true });
         };
         this.init = function (server) { return __awaiter(_this, void 0, void 0, function () {
             var enrichments;
