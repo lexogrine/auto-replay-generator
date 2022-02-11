@@ -154,10 +154,10 @@ export class ARGQueue {
 		const timeToKill = kill.timestamp - currentTime;
 		let timeToSwitch = 0;
 
-		if(prev) {
+		if (prev) {
 			const timeToKillPrev = prev.timestamp - currentTime;
 
-			timeToSwitch = (timeToKill + timeToKillPrev)/2;
+			timeToSwitch = (timeToKill + timeToKillPrev) / 2;
 		}
 
 		const timeout = setTimeout(() => {
@@ -175,7 +175,7 @@ export class ARGQueue {
 
 			if (!prev || Math.abs(prev.timestamp - kill.timestamp) > argConfig.preTime + argConfig.postTime) {
 				const markInTimeout = setTimeout(async () => {
-					if(vMix.connected()){
+					if (vMix.connected()) {
 						this.isRecordingNow = true;
 						await vMix.send({ Function: 'ReplayLive' });
 						await vMix.send({ Function: 'ReplayMarkIn' });
@@ -188,17 +188,15 @@ export class ARGQueue {
 
 			if (!next || Math.abs(next.timestamp - kill.timestamp) > argConfig.preTime + argConfig.postTime) {
 				const markOutTimeout = setTimeout(async () => {
-
-					if(vMix.connected()) await vMix.send({ Function: 'ReplayMarkOut' });
+					if (vMix.connected()) await vMix.send({ Function: 'ReplayMarkOut' });
 
 					//console.log(`END REPLAY FRAGMENT [${kill.name} -> ${kill.victim || 'SOMEONE'}]`,now());
 
 					this.isRecordingNow = false;
 
-					if(this.playAfterRecording){
+					if (this.playAfterRecording) {
 						this.show();
 					}
-
 				}, timeToMarkOut);
 
 				timeouts.push(markOutTimeout);
@@ -209,7 +207,7 @@ export class ARGQueue {
 	};
 
 	private regenerate = () => {
-		if(this.isRecordingNow || this.isPlayingNow) return;
+		if (this.isRecordingNow || this.isPlayingNow) return;
 
 		this.swaps.forEach(swap => swap.timeouts.forEach(timeout => clearTimeout(timeout)));
 		this.swaps = [];
@@ -226,10 +224,10 @@ export class ARGQueue {
 	clear = async () => {
 		this.playAfterRecording = false;
 		setTimeout(() => {
-			if(vMix.connected()) vMix.send({ Function: 'ReplayStopEvents' });
+			if (vMix.connected()) vMix.send({ Function: 'ReplayStopEvents' });
 			//console.log(`ReplayStopEvents`,now());
 		}, 2000);
-		if(vMix.connected()) {
+		if (vMix.connected()) {
 			//console.log(`Moving / deleting events`,now());
 			for (let i = 0; i < 10; i++) {
 				if (argConfig.saveClips) {
@@ -242,12 +240,12 @@ export class ARGQueue {
 	};
 
 	show = async () => {
-		if(this.isRecordingNow){
+		if (this.isRecordingNow) {
 			this.playAfterRecording = true;
 			return;
 		}
 		this.playAfterRecording = false;
-		if(vMix.connected()) await vMix.send({ Function: 'ReplayPlayAllEventsToOutput' });
+		if (vMix.connected()) await vMix.send({ Function: 'ReplayPlayAllEventsToOutput' });
 		//console.log(`Play all events to output`,now());
 	};
 
