@@ -72,9 +72,9 @@ exports.argConfig = {
     postTime: 1500,
     saveClips: false
 };
-var vMix = new node_vmix_1.Connection("localhost");
+var vMix = new node_vmix_1.Connection('localhost');
 var ENABLE_VMIX = true;
-var now = function () { return (new Date()).getTime(); };
+var now = function () { return new Date().getTime(); };
 var comparisons = {
     multikills: function (killToCheck, killToCompare, allKills) {
         var killsOfPlayerOne = allKills.filter(function (kill) { return kill.killer === killToCheck.killer; }).length;
@@ -114,7 +114,9 @@ var isKillBetter = function (killToCheck, killToCompare, allKills) {
 var isKillWorthShowing = function (kill, allKills) {
     if (kill.killerHealth === 0)
         return false;
-    var conflictingKills = allKills.filter(function (exampleKill) { return exampleKill !== kill && exampleKill.killer !== kill.killer && exampleKill.killerHealth > 0; }).filter(function (exampleKill) { return Math.abs(kill.timestamp - exampleKill.timestamp) <= (exports.argConfig.preTime + exports.argConfig.postTime); });
+    var conflictingKills = allKills
+        .filter(function (exampleKill) { return exampleKill !== kill && exampleKill.killer !== kill.killer && exampleKill.killerHealth > 0; })
+        .filter(function (exampleKill) { return Math.abs(kill.timestamp - exampleKill.timestamp) <= exports.argConfig.preTime + exports.argConfig.postTime; });
     if (!conflictingKills.length)
         return true;
     var conflictingAndBetterKills = conflictingKills.filter(function (conflicting) { return isKillBetter(kill, conflicting, allKills); });
@@ -138,43 +140,61 @@ var ARGQueue = /** @class */ (function () {
             }
         };
         this.generateSwap = function (kill, prev, next) {
-            var timeToKill = kill.timestamp - now();
-            var timeToExecute = timeToKill - exports.argConfig.preTime;
+            var currentTime = now();
+            var timeToKill = kill.timestamp - currentTime;
+            var timeToSwitch = 0;
+            if (prev) {
+                var timeToKillPrev = prev.timestamp - currentTime;
+                timeToSwitch = (timeToKill + timeToKillPrev) / 2;
+            }
             var timeout = setTimeout(function () {
-                if (kill.weapon === "hegrenade" && kill.victim) {
+                if (kill.weapon === 'hegrenade' && kill.victim) {
                     _this.swapToPlayer({ steamid: kill.victim });
                 }
                 else {
                     _this.swapToPlayer({ steamid: kill.killer });
                 }
-            }, timeToExecute);
+            }, timeToSwitch);
             var timeouts = [timeout];
             if (ENABLE_VMIX) {
                 var timeToMarkIn = timeToKill - exports.argConfig.preTime;
                 var timeToMarkOut = timeToKill + exports.argConfig.postTime;
-                if (!prev || Math.abs(prev.timestamp - kill.timestamp) > (exports.argConfig.preTime + exports.argConfig.postTime)) {
+                if (!prev || Math.abs(prev.timestamp - kill.timestamp) > exports.argConfig.preTime + exports.argConfig.postTime) {
                     var markInTimeout = setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0: return [4 /*yield*/, vMix.send({ Function: 'ReplayLive' })];
+                                case 0:
+                                    if (!vMix.connected()) return [3 /*break*/, 3];
+                                    this.isRecordingNow = true;
+                                    return [4 /*yield*/, vMix.send({ Function: 'ReplayLive' })];
                                 case 1:
                                     _a.sent();
                                     return [4 /*yield*/, vMix.send({ Function: 'ReplayMarkIn' })];
                                 case 2:
                                     _a.sent();
-                                    return [2 /*return*/];
+                                    _a.label = 3;
+                                case 3: return [2 /*return*/];
                             }
                         });
                     }); }, timeToMarkIn);
                     timeouts.push(markInTimeout);
                 }
-                if (!next || Math.abs(next.timestamp - kill.timestamp) > (exports.argConfig.preTime + exports.argConfig.postTime)) {
+                if (!next || Math.abs(next.timestamp - kill.timestamp) > exports.argConfig.preTime + exports.argConfig.postTime) {
                     var markOutTimeout = setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
-                                case 0: return [4 /*yield*/, vMix.send({ Function: 'ReplayMarkOut' })];
+                                case 0:
+                                    if (!vMix.connected()) return [3 /*break*/, 2];
+                                    return [4 /*yield*/, vMix.send({ Function: 'ReplayMarkOut' })];
                                 case 1:
                                     _a.sent();
+                                    _a.label = 2;
+                                case 2:
+                                    //console.log(`END REPLAY FRAGMENT [${kill.name} -> ${kill.victim || 'SOMEONE'}]`,now());
+                                    this.isRecordingNow = false;
+                                    if (this.playAfterRecording) {
+                                        this.show();
+                                    }
                                     return [2 /*return*/];
                             }
                         });
@@ -185,19 +205,29 @@ var ARGQueue = /** @class */ (function () {
             _this.swaps.push({ kill: kill, timeouts: timeouts });
         };
         this.regenerate = function () {
+            if (_this.isRecordingNow || _this.isPlayingNow)
+                return;
             _this.swaps.forEach(function (swap) { return swap.timeouts.forEach(function (timeout) { return clearTimeout(timeout); }); });
             _this.swaps = [];
-            var interestingKills = _this.kills.filter(function (kill) { return isKillWorthShowing(kill, _this.kills); }).sort(function (a, b) { return a.timestamp - b.timestamp; });
-            interestingKills.forEach(function (kill, index, array) { return _this.generateSwap(kill, array[index - 1] || null, array[index + 1] || null); });
+            var interestingKills = _this.kills
+                .filter(function (kill) { return isKillWorthShowing(kill, _this.kills); })
+                .sort(function (a, b) { return a.timestamp - b.timestamp; });
+            interestingKills.forEach(function (kill, index, array) {
+                return _this.generateSwap(kill, array[index - 1] || null, array[index + 1] || null);
+            });
         };
         this.clear = function () { return __awaiter(_this, void 0, void 0, function () {
             var i;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        this.playAfterRecording = false;
                         setTimeout(function () {
-                            vMix.send({ Function: 'ReplayStopEvents' });
+                            if (vMix.connected())
+                                vMix.send({ Function: 'ReplayStopEvents' });
+                            //console.log(`ReplayStopEvents`,now());
                         }, 2000);
+                        if (!vMix.connected()) return [3 /*break*/, 6];
                         i = 0;
                         _a.label = 1;
                     case 1:
@@ -221,10 +251,18 @@ var ARGQueue = /** @class */ (function () {
         this.show = function () { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, vMix.send({ Function: 'ReplayPlayAllEventsToOutput' })];
+                    case 0:
+                        if (this.isRecordingNow) {
+                            this.playAfterRecording = true;
+                            return [2 /*return*/];
+                        }
+                        this.playAfterRecording = false;
+                        if (!vMix.connected()) return [3 /*break*/, 2];
+                        return [4 /*yield*/, vMix.send({ Function: 'ReplayPlayAllEventsToOutput' })];
                     case 1:
                         _a.sent();
-                        return [2 /*return*/];
+                        _a.label = 2;
+                    case 2: return [2 /*return*/];
                 }
             });
         }); };
@@ -236,6 +274,9 @@ var ARGQueue = /** @class */ (function () {
         this.kills = [];
         this.swaps = [];
         this.pgl = new hlae_1.MIRVPGL(server);
+        this.isPlayingNow = false;
+        this.isRecordingNow = false;
+        this.playAfterRecording = false;
     }
     return ARGQueue;
 }());

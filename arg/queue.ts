@@ -126,10 +126,19 @@ export class ARGQueue {
 	private swaps: Swap[];
 	private pgl: MIRVPGL;
 
+	private isRecordingNow: boolean;
+	private isPlayingNow: boolean;
+
+	private playAfterRecording: boolean;
+
 	constructor(server: SimpleWebSocketServer) {
 		this.kills = [];
 		this.swaps = [];
 		this.pgl = new MIRVPGL(server);
+
+		this.isPlayingNow = false;
+		this.isRecordingNow = false;
+		this.playAfterRecording = false;
 	}
 
 	swapToPlayer = (player: { steamid?: string; name?: string }) => {
@@ -141,8 +150,15 @@ export class ARGQueue {
 	};
 
 	private generateSwap = (kill: ARGKillEntry, prev: ARGKillEntry | null, next: ARGKillEntry | null) => {
-		const timeToKill = kill.timestamp - now();
-		const timeToExecute = timeToKill - argConfig.preTime;
+		const currentTime = now();
+		const timeToKill = kill.timestamp - currentTime;
+		let timeToSwitch = 0;
+
+		if(prev) {
+			const timeToKillPrev = prev.timestamp - currentTime;
+
+			timeToSwitch = (timeToKill + timeToKillPrev)/2;
+		}
 
 		const timeout = setTimeout(() => {
 			if (kill.weapon === 'hegrenade' && kill.victim) {
@@ -150,7 +166,7 @@ export class ARGQueue {
 			} else {
 				this.swapToPlayer({ steamid: kill.killer });
 			}
-		}, timeToExecute);
+		}, timeToSwitch);
 
 		const timeouts = [timeout];
 		if (ENABLE_VMIX) {
@@ -159,8 +175,12 @@ export class ARGQueue {
 
 			if (!prev || Math.abs(prev.timestamp - kill.timestamp) > argConfig.preTime + argConfig.postTime) {
 				const markInTimeout = setTimeout(async () => {
-					await vMix.send({ Function: 'ReplayLive' });
-					await vMix.send({ Function: 'ReplayMarkIn' });
+					if(vMix.connected()){
+						this.isRecordingNow = true;
+						await vMix.send({ Function: 'ReplayLive' });
+						await vMix.send({ Function: 'ReplayMarkIn' });
+					}
+					//console.log(`START REPLAY FRAGMENT [${kill.name} -> ${kill.victim || 'SOMEONE'}]`,now());
 				}, timeToMarkIn);
 
 				timeouts.push(markInTimeout);
@@ -168,7 +188,17 @@ export class ARGQueue {
 
 			if (!next || Math.abs(next.timestamp - kill.timestamp) > argConfig.preTime + argConfig.postTime) {
 				const markOutTimeout = setTimeout(async () => {
-					await vMix.send({ Function: 'ReplayMarkOut' });
+
+					if(vMix.connected()) await vMix.send({ Function: 'ReplayMarkOut' });
+
+					//console.log(`END REPLAY FRAGMENT [${kill.name} -> ${kill.victim || 'SOMEONE'}]`,now());
+
+					this.isRecordingNow = false;
+
+					if(this.playAfterRecording){
+						this.show();
+					}
+
 				}, timeToMarkOut);
 
 				timeouts.push(markOutTimeout);
@@ -179,6 +209,8 @@ export class ARGQueue {
 	};
 
 	private regenerate = () => {
+		if(this.isRecordingNow || this.isPlayingNow) return;
+
 		this.swaps.forEach(swap => swap.timeouts.forEach(timeout => clearTimeout(timeout)));
 		this.swaps = [];
 
@@ -192,20 +224,31 @@ export class ARGQueue {
 	};
 
 	clear = async () => {
+		this.playAfterRecording = false;
 		setTimeout(() => {
-			vMix.send({ Function: 'ReplayStopEvents' });
+			if(vMix.connected()) vMix.send({ Function: 'ReplayStopEvents' });
+			//console.log(`ReplayStopEvents`,now());
 		}, 2000);
-		for (let i = 0; i < 10; i++) {
-			if (argConfig.saveClips) {
-				await vMix.send({ Function: 'ReplayMoveLastEvent', Value: '9' });
-			} else {
-				await vMix.send({ Function: 'ReplayDeleteLastEvent' });
+		if(vMix.connected()) {
+			//console.log(`Moving / deleting events`,now());
+			for (let i = 0; i < 10; i++) {
+				if (argConfig.saveClips) {
+					await vMix.send({ Function: 'ReplayMoveLastEvent', Value: '9' });
+				} else {
+					await vMix.send({ Function: 'ReplayDeleteLastEvent' });
+				}
 			}
 		}
 	};
 
 	show = async () => {
-		await vMix.send({ Function: 'ReplayPlayAllEventsToOutput' });
+		if(this.isRecordingNow){
+			this.playAfterRecording = true;
+			return;
+		}
+		this.playAfterRecording = false;
+		if(vMix.connected()) await vMix.send({ Function: 'ReplayPlayAllEventsToOutput' });
+		//console.log(`Play all events to output`,now());
 	};
 
 	add = (kills: ARGKillEntry[]) => {

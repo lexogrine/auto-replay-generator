@@ -62,7 +62,6 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                 });
                 server.onConnection(function (socket) {
                     socket.on('register', function (order, saveClips, safeBand) {
-                        console.log({ order: order, saveClips: saveClips, safeBand: safeBand });
                         if (exports.isConnected) {
                             socket._socket.close();
                             return;
@@ -82,7 +81,6 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                         arg.add(kills);
                     });
                     socket.on('config', function (order, saveClips, safeBand) {
-                        console.log({ order: order, saveClips: saveClips, safeBand: safeBand });
                         queue_1.argConfig.order = order;
                         queue_1.argConfig.saveClips = saveClips;
                         queue_1.argConfig.preTime = safeBand.preTime;
