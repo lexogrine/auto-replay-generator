@@ -9,6 +9,11 @@
 import { SimpleWebSocketServer } from 'simple-websockets-server';
 import { MIRVPGL } from './hlae';
 import { Connection } from 'node-vmix';
+import { app } from 'electron';
+import path from 'path';
+import fs from 'fs';
+
+const configPath = path.join(app.getPath('userData'), 'config.json');
 
 export const argConfig = {
 	order: [
@@ -30,7 +35,14 @@ export const argConfig = {
 	saveClips: false
 };
 
-const vMix = new Connection('localhost');
+let config = { vMixAddress: 'localhost' };
+
+if(fs.existsSync(configPath)){
+	config = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as { vMixAddress: string };
+}
+
+
+const vMix = new Connection(config.vMixAddress);
 
 const ENABLE_VMIX = true;
 const now = () => new Date().getTime();
