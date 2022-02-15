@@ -39,8 +39,9 @@ let config = { vMixAddress: 'localhost' };
 
 if(fs.existsSync(configPath)){
 	config = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as { vMixAddress: string };
+} else {
+	fs.writeFileSync(configPath, JSON.stringify(config), "utf-8");
 }
-
 
 const vMix = new Connection(config.vMixAddress);
 

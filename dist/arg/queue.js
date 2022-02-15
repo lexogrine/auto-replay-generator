@@ -49,10 +49,17 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
             r[k] = a[j];
     return r;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 exports.__esModule = true;
 exports.ARGQueue = exports.argConfig = void 0;
 var hlae_1 = require("./hlae");
 var node_vmix_1 = require("node-vmix");
+var electron_1 = require("electron");
+var path_1 = __importDefault(require("path"));
+var fs_1 = __importDefault(require("fs"));
+var configPath = path_1["default"].join(electron_1.app.getPath('userData'), 'config.json');
 exports.argConfig = {
     order: [
         {
@@ -72,7 +79,14 @@ exports.argConfig = {
     postTime: 1500,
     saveClips: false
 };
-var vMix = new node_vmix_1.Connection('localhost');
+var config = { vMixAddress: 'localhost' };
+if (fs_1["default"].existsSync(configPath)) {
+    config = JSON.parse(fs_1["default"].readFileSync(configPath, 'utf-8'));
+}
+else {
+    fs_1["default"].writeFileSync(configPath, JSON.stringify(config), "utf-8");
+}
+var vMix = new node_vmix_1.Connection(config.vMixAddress);
 var ENABLE_VMIX = true;
 var now = function () { return new Date().getTime(); };
 var comparisons = {
