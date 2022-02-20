@@ -11,6 +11,8 @@ vMix setup is up to the user.
 
 LARG 1.1 requires LHM 2.5.2+
 
+If your setup has 3+ PCs, it is advised to use CS:GOs and vMix on separate different machines for performance reasons. The only difference from the usual setup is having vMix on another PC and setting vMix IP address at `%appdata%/auto-replay-generator/config.json`.
+
 # Connecting
 
 To connect both PCs you just need to put ARGs ID to LHM and click connect. ARG app on PC#2 should update its status to online. After you connected both PCs to GOTV you should execute command shown by ARG in CS:GO's console on PC#2.

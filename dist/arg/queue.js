@@ -81,12 +81,15 @@ exports.argConfig = {
 };
 var config = { vMixAddress: 'localhost' };
 if (fs_1["default"].existsSync(configPath)) {
-    config = JSON.parse(fs_1["default"].readFileSync(configPath, 'utf-8'));
+    try {
+        config = JSON.parse(fs_1["default"].readFileSync(configPath, 'utf-8'));
+    }
+    catch (_a) { }
 }
 else {
     fs_1["default"].writeFileSync(configPath, JSON.stringify(config), 'utf-8');
 }
-var vMix = new node_vmix_1.Connection(config.vMixAddress);
+var vMix = new node_vmix_1.Connection((config === null || config === void 0 ? void 0 : config.vMixAddress) || 'localhost');
 var ENABLE_VMIX = true;
 var now = function () { return new Date().getTime(); };
 var comparisons = {
