@@ -84,7 +84,7 @@ if (fs_1["default"].existsSync(configPath)) {
     config = JSON.parse(fs_1["default"].readFileSync(configPath, 'utf-8'));
 }
 else {
-    fs_1["default"].writeFileSync(configPath, JSON.stringify(config), "utf-8");
+    fs_1["default"].writeFileSync(configPath, JSON.stringify(config), 'utf-8');
 }
 var vMix = new node_vmix_1.Connection(config.vMixAddress);
 var ENABLE_VMIX = true;

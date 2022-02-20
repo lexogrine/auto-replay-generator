@@ -38,12 +38,16 @@ export const argConfig = {
 let config = { vMixAddress: 'localhost' };
 
 if (fs.existsSync(configPath)) {
-	config = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as { vMixAddress: string };
+	try {
+		config = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as { vMixAddress: string };
+	} catch {
+
+	}
 } else {
 	fs.writeFileSync(configPath, JSON.stringify(config), 'utf-8');
 }
 
-const vMix = new Connection(config.vMixAddress);
+const vMix = new Connection(config?.vMixAddress || 'localhost');
 
 const ENABLE_VMIX = true;
 const now = () => new Date().getTime();
