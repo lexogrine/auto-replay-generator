@@ -40,9 +40,7 @@ let config = { vMixAddress: 'localhost' };
 if (fs.existsSync(configPath)) {
 	try {
 		config = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as { vMixAddress: string };
-	} catch {
-
-	}
+	} catch {}
 } else {
 	fs.writeFileSync(configPath, JSON.stringify(config), 'utf-8');
 }
