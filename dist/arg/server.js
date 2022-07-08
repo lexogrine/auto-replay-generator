@@ -77,11 +77,11 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                         exports.isConnected = true;
                         win.webContents.send('argStatus', true);
                         socket.send('registered');
-                        socket.send("ntpPing", Date.now());
+                        socket.send('ntpPing', Date.now());
                     });
                     socket.on('ntpPong', function (t1, t2, t3) {
                         var t4 = Date.now();
-                        offset = ((t2 - t1) + (t3 - t4)) / 2;
+                        offset = (t2 - t1 + (t3 - t4)) / 2;
                     });
                     socket.on('kills', function (kills) {
                         kills.forEach(function (kill) {

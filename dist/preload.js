@@ -8,7 +8,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 };
 exports.__esModule = true;
 var electron_1 = require("electron");
-electron_1.contextBridge.exposeInMainWorld("ipcApi", {
+electron_1.contextBridge.exposeInMainWorld('ipcApi', {
     send: function (channel) {
         var data = [];
         for (var _i = 1; _i < arguments.length; _i++) {

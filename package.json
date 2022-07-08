@@ -52,6 +52,13 @@
       "!**/win-unpacked/*",
       "!**/.git/**/*",
       "!**/.git/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "lexogrine",
+        "repo": "auto-replay-generator"
+      }
     ]
   },
   "main": "dist/electron.js",
@@ -63,9 +70,11 @@
     "electron": "npm run transpile && npm run devElectron",
     "test": "react-scripts test",
     "dev": "concurrently \"cross-env BROWSER=none PORT=3023 npm start\" \"npm run electron\"",
-    "dist": "electron-builder",
+    "dist": "electron-builder --publish never",
+    "publish": "electron-builder --publish always",
     "lint": "eslint . --ext .ts,.tsx",
     "compile": "npm run build && npm run dist",
+    "compileAndPublish": "npm run build && npm run publish",
     "eject": "react-scripts eject",
     "prettier-format": "prettier --config .prettierrc --write **/*.{ts,tsx}"
   },
