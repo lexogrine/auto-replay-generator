@@ -44,19 +44,19 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
 			win.webContents.send('argStatus', true);
 			socket.send('registered');
 
-			socket.send("ntpPing", Date.now());
+			socket.send('ntpPing', Date.now());
 		});
 
 		socket.on('ntpPong', (t1: number, t2: number, t3: number) => {
 			const t4 = Date.now();
 
-			offset = ((t2-t1)+(t3-t4))/2;
-		})
+			offset = (t2 - t1 + (t3 - t4)) / 2;
+		});
 
 		socket.on('kills', (kills: ARGKillEntry[]) => {
 			kills.forEach(kill => {
 				kill.timestamp -= offset;
-			})
+			});
 			arg.add(kills);
 		});
 

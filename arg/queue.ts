@@ -13,7 +13,6 @@ import { app } from 'electron';
 import path from 'path';
 import fs from 'fs';
 
-
 const configPath = path.join(app.getPath('userData'), 'config.json');
 
 export const argConfig = {
@@ -168,7 +167,7 @@ export class ARGQueue {
 		const currentTime = Date.now();
 		const timeToKill = kill.timestamp - currentTime;
 		let timeToSwitch = 0;
-		
+
 		if (prev) {
 			const timeToKillPrev = prev.timestamp - currentTime;
 

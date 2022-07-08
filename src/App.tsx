@@ -5,11 +5,10 @@ declare global {
 	interface Window {
 		ipcApi: {
 			send: (channel: string, ...arg: any) => void;
-			on: (channel: string, func: (...arg: any) => void) => void
-		}
+			on: (channel: string, func: (...arg: any) => void) => void;
+		};
 	}
 }
-
 
 function App() {
 	const [status, setStatus] = useState(false);
@@ -18,7 +17,7 @@ function App() {
 
 	useEffect(() => {
 		setStatus(false);
-		window.ipcApi.on('address', ( address: { ip: string; port: number }) => {
+		window.ipcApi.on('address', (address: { ip: string; port: number }) => {
 			setPort(address.port);
 			setAddress(
 				address.ip
@@ -30,10 +29,10 @@ function App() {
 					address.port.toString(16)
 			);
 		});
-		window.ipcApi.on('argStatus', ( status: boolean) => {
+		window.ipcApi.on('argStatus', (status: boolean) => {
 			setStatus(status);
 		});
-		window.ipcApi.on('status', ( status: boolean) => {
+		window.ipcApi.on('status', (status: boolean) => {
 			setStatus(status);
 		});
 		window.ipcApi.send('getAddress');
