@@ -28,7 +28,8 @@ const createMainWindow = async () => {
 		icon: path.join(__dirname, 'assets/icon.png'),
 		webPreferences: {
 			backgroundThrottling: false,
-			nodeIntegration: true
+			nodeIntegration: true,
+			preload: path.join(__dirname, 'preload.js')
 			//devTools: isDev
 		},
 		minWidth: 775,
@@ -46,19 +47,19 @@ const createMainWindow = async () => {
 	});
 
 	ipcMain.on('min', () => {
-		win.minimize();
+		win?.minimize();
 	});
 
 	ipcMain.on('max', () => {
-		if (win.isMaximized()) {
-			win.restore();
+		if (win?.isMaximized()) {
+			win?.restore();
 		} else {
-			win.maximize();
+			win?.maximize();
 		}
 	});
 
 	ipcMain.on('close', () => {
-		win.close();
+		win?.close();
 	});
 
 	win.once('ready-to-show', () => {

@@ -12,9 +12,7 @@ import { Connection } from 'node-vmix';
 import { app } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import { NtpTimeSync } from "ntp-time-sync";
 
-const ntpClient = NtpTimeSync.getInstance();
 
 const configPath = path.join(app.getPath('userData'), 'config.json');
 
@@ -51,7 +49,6 @@ if (fs.existsSync(configPath)) {
 const vMix = new Connection(config?.vMixAddress || 'localhost');
 
 const ENABLE_VMIX = true;
-const now = async () => (await ntpClient.getTime()).now.getTime();
 
 export interface ARGKillEntry {
 	killer: string;
@@ -167,11 +164,11 @@ export class ARGQueue {
 		}
 	};
 
-	private generateSwap = async (kill: ARGKillEntry, prev: ARGKillEntry | null, next: ARGKillEntry | null) => {
-		const currentTime = await now();
+	private generateSwap = (kill: ARGKillEntry, prev: ARGKillEntry | null, next: ARGKillEntry | null) => {
+		const currentTime = Date.now();
 		const timeToKill = kill.timestamp - currentTime;
 		let timeToSwitch = 0;
-
+		
 		if (prev) {
 			const timeToKillPrev = prev.timestamp - currentTime;
 
@@ -267,8 +264,8 @@ export class ARGQueue {
 		//console.log(`Play all events to output`,now());
 	};
 
-	add = async (kills: ARGKillEntry[]) => {
-		const nowTime = await now();
+	add = (kills: ARGKillEntry[]) => {
+		const nowTime = Date.now();
 		const allKills = [...this.kills, ...kills].filter(kill => kill.timestamp - 2000 >= nowTime);
 		this.kills = allKills;
 

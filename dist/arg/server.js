@@ -47,6 +47,7 @@ var queue_1 = require("./queue");
 var electron_1 = require("electron");
 exports.isConnected = false;
 var socketId = null;
+var offset = 0;
 var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, void 0, function () {
     var port, ip, server, arg;
     return __generator(this, function (_a) {
@@ -76,8 +77,16 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                         exports.isConnected = true;
                         win.webContents.send('argStatus', true);
                         socket.send('registered');
+                        socket.send("ntpPing", Date.now());
+                    });
+                    socket.on('ntpPong', function (t1, t2, t3) {
+                        var t4 = Date.now();
+                        offset = ((t2 - t1) + (t3 - t4)) / 2;
                     });
                     socket.on('kills', function (kills) {
+                        kills.forEach(function (kill) {
+                            kill.timestamp -= offset;
+                        });
                         arg.add(kills);
                     });
                     socket.on('config', function (order, saveClips, safeBand) {
@@ -93,6 +102,7 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                     socket.on('showReplay', arg.show);
                     socket.on('disconnect', function () {
                         if (socketId === socket) {
+                            offset = 0;
                             exports.isConnected = false;
                             win.webContents.send('argStatus', false);
                         }

@@ -72,7 +72,8 @@ var createMainWindow = function () { return __awaiter(void 0, void 0, void 0, fu
                     icon: path_1["default"].join(__dirname, 'assets/icon.png'),
                     webPreferences: {
                         backgroundThrottling: false,
-                        nodeIntegration: true
+                        nodeIntegration: true,
+                        preload: path_1["default"].join(__dirname, 'preload.js')
                         //devTools: isDev
                     },
                     minWidth: 775,
@@ -89,18 +90,18 @@ var createMainWindow = function () { return __awaiter(void 0, void 0, void 0, fu
                     ev.reply('status', server_1.isConnected);
                 });
                 electron_1.ipcMain.on('min', function () {
-                    win.minimize();
+                    win === null || win === void 0 ? void 0 : win.minimize();
                 });
                 electron_1.ipcMain.on('max', function () {
-                    if (win.isMaximized()) {
-                        win.restore();
+                    if (win === null || win === void 0 ? void 0 : win.isMaximized()) {
+                        win === null || win === void 0 ? void 0 : win.restore();
                     }
                     else {
-                        win.maximize();
+                        win === null || win === void 0 ? void 0 : win.maximize();
                     }
                 });
                 electron_1.ipcMain.on('close', function () {
-                    win.close();
+                    win === null || win === void 0 ? void 0 : win.close();
                 });
                 win.once('ready-to-show', function () {
                     if (win) {

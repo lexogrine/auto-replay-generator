@@ -4,6 +4,7 @@ import internalIp from 'internal-ip';
 import { BrowserWindow } from 'electron/main';
 import { ARGKillEntry, ARGQueue, argConfig } from './queue';
 import { ipcMain } from 'electron';
+import { SimpleWebSocket } from 'simple-websockets';
 
 export interface Item {
 	id: string;
@@ -12,7 +13,8 @@ export interface Item {
 }
 
 export let isConnected = false;
-let socketId = null;
+let socketId: SimpleWebSocket | null = null;
+let offset = 0;
 
 export const startWebSocketServer = async (win: BrowserWindow) => {
 	const port = await getPort({ port: [1300, 1302, 1304, 1305, 1310] });
@@ -41,9 +43,20 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
 			isConnected = true;
 			win.webContents.send('argStatus', true);
 			socket.send('registered');
+
+			socket.send("ntpPing", Date.now());
 		});
 
+		socket.on('ntpPong', (t1: number, t2: number, t3: number) => {
+			const t4 = Date.now();
+
+			offset = ((t2-t1)+(t3-t4))/2;
+		})
+
 		socket.on('kills', (kills: ARGKillEntry[]) => {
+			kills.forEach(kill => {
+				kill.timestamp -= offset;
+			})
 			arg.add(kills);
 		});
 
@@ -64,6 +77,7 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
 
 		socket.on('disconnect', () => {
 			if (socketId === socket) {
+				offset = 0;
 				isConnected = false;
 
 				win.webContents.send('argStatus', false);

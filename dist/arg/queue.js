@@ -59,8 +59,6 @@ var node_vmix_1 = require("node-vmix");
 var electron_1 = require("electron");
 var path_1 = __importDefault(require("path"));
 var fs_1 = __importDefault(require("fs"));
-var ntp_time_sync_1 = require("ntp-time-sync");
-var ntpClient = ntp_time_sync_1.NtpTimeSync.getInstance();
 var configPath = path_1["default"].join(electron_1.app.getPath('userData'), 'config.json');
 exports.argConfig = {
     order: [
@@ -93,12 +91,6 @@ else {
 }
 var vMix = new node_vmix_1.Connection((config === null || config === void 0 ? void 0 : config.vMixAddress) || 'localhost');
 var ENABLE_VMIX = true;
-var now = function () { return __awaiter(void 0, void 0, void 0, function () { return __generator(this, function (_a) {
-    switch (_a.label) {
-        case 0: return [4 /*yield*/, ntpClient.getTime()];
-        case 1: return [2 /*return*/, (_a.sent()).now.getTime()];
-    }
-}); }); };
 var comparisons = {
     multikills: function (killToCheck, killToCompare, allKills) {
         var killsOfPlayerOne = allKills.filter(function (kill) { return kill.killer === killToCheck.killer; }).length;
@@ -163,80 +155,71 @@ var ARGQueue = /** @class */ (function () {
                 _this.pgl.execute("spec_player_by_name " + player.name);
             }
         };
-        this.generateSwap = function (kill, prev, next) { return __awaiter(_this, void 0, void 0, function () {
-            var currentTime, timeToKill, timeToSwitch, timeToKillPrev, timeout, timeouts, timeToMarkIn, timeToMarkOut, markInTimeout, markOutTimeout;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, now()];
-                    case 1:
-                        currentTime = _a.sent();
-                        timeToKill = kill.timestamp - currentTime;
-                        timeToSwitch = 0;
-                        if (prev) {
-                            timeToKillPrev = prev.timestamp - currentTime;
-                            timeToSwitch = (timeToKill + timeToKillPrev) / 2;
-                        }
-                        timeout = setTimeout(function () {
-                            if (kill.weapon === 'hegrenade' && kill.victim) {
-                                _this.swapToPlayer({ steamid: kill.victim });
-                            }
-                            else {
-                                _this.swapToPlayer({ steamid: kill.killer });
-                            }
-                        }, timeToSwitch);
-                        timeouts = [timeout];
-                        if (ENABLE_VMIX) {
-                            timeToMarkIn = timeToKill - exports.argConfig.preTime;
-                            timeToMarkOut = timeToKill + exports.argConfig.postTime;
-                            if (!prev || Math.abs(prev.timestamp - kill.timestamp) > exports.argConfig.preTime + exports.argConfig.postTime) {
-                                markInTimeout = setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
-                                    return __generator(this, function (_a) {
-                                        switch (_a.label) {
-                                            case 0:
-                                                if (!vMix.connected()) return [3 /*break*/, 3];
-                                                this.isRecordingNow = true;
-                                                return [4 /*yield*/, vMix.send({ Function: 'ReplayLive' })];
-                                            case 1:
-                                                _a.sent();
-                                                return [4 /*yield*/, vMix.send({ Function: 'ReplayMarkIn' })];
-                                            case 2:
-                                                _a.sent();
-                                                _a.label = 3;
-                                            case 3: return [2 /*return*/];
-                                        }
-                                    });
-                                }); }, timeToMarkIn);
-                                timeouts.push(markInTimeout);
-                            }
-                            if (!next || Math.abs(next.timestamp - kill.timestamp) > exports.argConfig.preTime + exports.argConfig.postTime) {
-                                markOutTimeout = setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
-                                    return __generator(this, function (_a) {
-                                        switch (_a.label) {
-                                            case 0:
-                                                if (!vMix.connected()) return [3 /*break*/, 2];
-                                                return [4 /*yield*/, vMix.send({ Function: 'ReplayMarkOut' })];
-                                            case 1:
-                                                _a.sent();
-                                                _a.label = 2;
-                                            case 2:
-                                                //console.log(`END REPLAY FRAGMENT [${kill.name} -> ${kill.victim || 'SOMEONE'}]`,now());
-                                                this.isRecordingNow = false;
-                                                if (this.playAfterRecording) {
-                                                    this.show();
-                                                }
-                                                return [2 /*return*/];
-                                        }
-                                    });
-                                }); }, timeToMarkOut);
-                                timeouts.push(markOutTimeout);
-                            }
-                        }
-                        this.swaps.push({ kill: kill, timeouts: timeouts });
-                        return [2 /*return*/];
+        this.generateSwap = function (kill, prev, next) {
+            var currentTime = Date.now();
+            var timeToKill = kill.timestamp - currentTime;
+            var timeToSwitch = 0;
+            if (prev) {
+                var timeToKillPrev = prev.timestamp - currentTime;
+                timeToSwitch = (timeToKill + timeToKillPrev) / 2;
+            }
+            var timeout = setTimeout(function () {
+                if (kill.weapon === 'hegrenade' && kill.victim) {
+                    _this.swapToPlayer({ steamid: kill.victim });
                 }
-            });
-        }); };
+                else {
+                    _this.swapToPlayer({ steamid: kill.killer });
+                }
+            }, timeToSwitch);
+            var timeouts = [timeout];
+            if (ENABLE_VMIX) {
+                var timeToMarkIn = timeToKill - exports.argConfig.preTime;
+                var timeToMarkOut = timeToKill + exports.argConfig.postTime;
+                if (!prev || Math.abs(prev.timestamp - kill.timestamp) > exports.argConfig.preTime + exports.argConfig.postTime) {
+                    var markInTimeout = setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    if (!vMix.connected()) return [3 /*break*/, 3];
+                                    this.isRecordingNow = true;
+                                    return [4 /*yield*/, vMix.send({ Function: 'ReplayLive' })];
+                                case 1:
+                                    _a.sent();
+                                    return [4 /*yield*/, vMix.send({ Function: 'ReplayMarkIn' })];
+                                case 2:
+                                    _a.sent();
+                                    _a.label = 3;
+                                case 3: return [2 /*return*/];
+                            }
+                        });
+                    }); }, timeToMarkIn);
+                    timeouts.push(markInTimeout);
+                }
+                if (!next || Math.abs(next.timestamp - kill.timestamp) > exports.argConfig.preTime + exports.argConfig.postTime) {
+                    var markOutTimeout = setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    if (!vMix.connected()) return [3 /*break*/, 2];
+                                    return [4 /*yield*/, vMix.send({ Function: 'ReplayMarkOut' })];
+                                case 1:
+                                    _a.sent();
+                                    _a.label = 2;
+                                case 2:
+                                    //console.log(`END REPLAY FRAGMENT [${kill.name} -> ${kill.victim || 'SOMEONE'}]`,now());
+                                    this.isRecordingNow = false;
+                                    if (this.playAfterRecording) {
+                                        this.show();
+                                    }
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); }, timeToMarkOut);
+                    timeouts.push(markOutTimeout);
+                }
+            }
+            _this.swaps.push({ kill: kill, timeouts: timeouts });
+        };
         this.regenerate = function () {
             if (_this.isRecordingNow || _this.isPlayingNow)
                 return;
@@ -299,20 +282,12 @@ var ARGQueue = /** @class */ (function () {
                 }
             });
         }); };
-        this.add = function (kills) { return __awaiter(_this, void 0, void 0, function () {
-            var nowTime, allKills;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, now()];
-                    case 1:
-                        nowTime = _a.sent();
-                        allKills = __spreadArrays(this.kills, kills).filter(function (kill) { return kill.timestamp - 2000 >= nowTime; });
-                        this.kills = allKills;
-                        this.regenerate();
-                        return [2 /*return*/];
-                }
-            });
-        }); };
+        this.add = function (kills) {
+            var nowTime = Date.now();
+            var allKills = __spreadArrays(_this.kills, kills).filter(function (kill) { return kill.timestamp - 2000 >= nowTime; });
+            _this.kills = allKills;
+            _this.regenerate();
+        };
         this.kills = [];
         this.swaps = [];
         this.pgl = new hlae_1.MIRVPGL(server);

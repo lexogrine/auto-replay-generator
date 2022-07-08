@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-const { ipcRenderer } = window.require('electron');
+declare global {
+	interface Window {
+		ipcApi: {
+			send: (channel: string, ...arg: any) => void;
+			on: (channel: string, func: (...arg: any) => void) => void
+		}
+	}
+}
+
 
 function App() {
 	const [status, setStatus] = useState(false);
@@ -10,7 +18,7 @@ function App() {
 
 	useEffect(() => {
 		setStatus(false);
-		ipcRenderer.on('address', (e: any, address: { ip: string; port: number }) => {
+		window.ipcApi.on('address', ( address: { ip: string; port: number }) => {
 			setPort(address.port);
 			setAddress(
 				address.ip
@@ -22,24 +30,24 @@ function App() {
 					address.port.toString(16)
 			);
 		});
-		ipcRenderer.on('argStatus', (e: any, status: boolean) => {
+		window.ipcApi.on('argStatus', ( status: boolean) => {
 			setStatus(status);
 		});
-		ipcRenderer.on('status', (e: any, status: boolean) => {
+		window.ipcApi.on('status', ( status: boolean) => {
 			setStatus(status);
 		});
-		ipcRenderer.send('getAddress');
-		ipcRenderer.send('getStatus');
+		window.ipcApi.send('getAddress');
+		window.ipcApi.send('getStatus');
 	}, []);
 
 	const minimize = () => {
-		ipcRenderer.send('min');
+		window.ipcApi.send('min');
 	};
 	const maximize = () => {
-		ipcRenderer.send('max');
+		window.ipcApi.send('max');
 	};
 	const close = () => {
-		ipcRenderer.send('close');
+		window.ipcApi.send('close');
 	};
 
 	return (
