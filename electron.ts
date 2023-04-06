@@ -40,10 +40,10 @@ const createMainWindow = async () => {
 	const address = await startWebSocketServer(win);
 
 	ipcMain.on('getAddress', ev => {
-		ev.reply('address', address);
+		ev.reply('address', { ip: address.ip, port: address.port });
 	});
 	ipcMain.on('getStatus', ev => {
-		ev.reply('status', isConnected);
+		ev.reply('status', isConnected, address.arg.netConPort.socket?.native.readyState === "open");
 	});
 
 	ipcMain.on('min', () => {

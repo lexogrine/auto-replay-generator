@@ -17,15 +17,15 @@ let socketId: SimpleWebSocket | null = null;
 let offset = 0;
 
 export const startWebSocketServer = async (win: BrowserWindow) => {
-	const port = await getPort({ port: [1300, 1302, 1304, 1305, 1310] });
+	const port = 1300;
 	const ip = internalIp.v4.sync();
 	const server = new SimpleWebSocketServer({ port });
 
-	const arg = new ARGQueue(server);
+	const arg = new ARGQueue();
 
-	ipcMain.on('switchToPlayer', (ev, name: string) => {
+	/*ipcMain.on('switchToPlayer', (ev, name: string) => {
 		arg.swapToPlayer({ name });
-	});
+	});*/
 
 	server.onConnection(socket => {
 		socket.on('register', (order: Item[], saveClips: boolean, safeBand: { preTime: number; postTime: number }) => {
@@ -41,7 +41,7 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
 			argConfig.postTime = safeBand.postTime;
 			socketId = socket;
 			isConnected = true;
-			win.webContents.send('argStatus', true);
+			win.webContents.send('status', true, arg.netConPort.socket?.native.readyState === "open");
 			socket.send('registered');
 
 			socket.send('ntpPing', Date.now());
@@ -80,10 +80,10 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
 				offset = 0;
 				isConnected = false;
 
-				win.webContents.send('argStatus', false);
+				win.webContents.send('status', false, arg.netConPort.socket?.native.readyState === "open");
 			}
 		});
 	});
 
-	return { ip, port };
+	return { ip, port, arg };
 };

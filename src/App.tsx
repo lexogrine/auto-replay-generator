@@ -13,6 +13,7 @@ declare global {
 function App() {
 	const [status, setStatus] = useState(false);
 	const [address, setAddress] = useState('');
+	const [ gameStatus, setGameStatus ] = useState(false);
 	const [port, setPort] = useState(0);
 
 	useEffect(() => {
@@ -29,11 +30,9 @@ function App() {
 					address.port.toString(16)
 			);
 		});
-		window.ipcApi.on('argStatus', (status: boolean) => {
+		window.ipcApi.on('status', (status: boolean, gameStatus: boolean) => {
 			setStatus(status);
-		});
-		window.ipcApi.on('status', (status: boolean) => {
-			setStatus(status);
+			setGameStatus(gameStatus);
 		});
 		window.ipcApi.send('getAddress');
 		window.ipcApi.send('getStatus');

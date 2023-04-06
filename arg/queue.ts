@@ -7,7 +7,7 @@
  */
 
 import { SimpleWebSocketServer } from 'simple-websockets-server';
-import { MIRVPGL } from './hlae';
+import { NetConPort } from './hlae';
 import { Connection } from 'node-vmix';
 import { app } from 'electron';
 import path from 'path';
@@ -60,6 +60,7 @@ export interface ARGKillEntry {
 	name: string;
 	teamkill: boolean;
 	headshot: boolean;
+	game: "csgo" | "dota2"
 }
 
 export interface Swap {
@@ -138,28 +139,33 @@ const isKillWorthShowing = (kill: ARGKillEntry, allKills: ARGKillEntry[]) => {
 export class ARGQueue {
 	private kills: ARGKillEntry[];
 	private swaps: Swap[];
-	private pgl: MIRVPGL;
+	netConPort: NetConPort;
 
 	private isRecordingNow: boolean;
 	private isPlayingNow: boolean;
 
 	private playAfterRecording: boolean;
 
-	constructor(server: SimpleWebSocketServer) {
+	constructor() {
 		this.kills = [];
 		this.swaps = [];
-		this.pgl = new MIRVPGL(server);
+		this.netConPort = new NetConPort();
 
 		this.isPlayingNow = false;
 		this.isRecordingNow = false;
 		this.playAfterRecording = false;
 	}
 
-	swapToPlayer = (player: { steamid?: string; name?: string }) => {
+	swapToPlayer = (player: { steamid?: string; name?: string, game: ARGKillEntry["game"] }) => {
+		if(player.game === 'dota2'){
+			if(!player.steamid) return;
+			this.netConPort.execute(`dota_spectator_mode 1; dota_spectator_hero_index ${player.steamid}; dota_spectator_mode 2`)
+			return;
+		}
 		if (player.steamid) {
-			this.pgl.execute(`spec_player_by_accountid ${player.steamid}`);
+			this.netConPort.execute(`spec_player_by_accountid ${player.steamid}`);
 		} else if (player.name) {
-			this.pgl.execute(`spec_player_by_name ${player.name}`);
+			this.netConPort.execute(`spec_player_by_name ${player.name}`);
 		}
 	};
 
@@ -176,9 +182,9 @@ export class ARGQueue {
 
 		const timeout = setTimeout(() => {
 			if (kill.weapon === 'hegrenade' && kill.victim) {
-				this.swapToPlayer({ steamid: kill.victim });
+				this.swapToPlayer({ steamid: kill.victim, game: kill.game });
 			} else {
-				this.swapToPlayer({ steamid: kill.killer });
+				this.swapToPlayer({ steamid: kill.killer, game: kill.game });
 			}
 		}, timeToSwitch);
 
