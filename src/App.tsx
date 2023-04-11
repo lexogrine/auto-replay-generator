@@ -13,7 +13,7 @@ declare global {
 function App() {
 	const [status, setStatus] = useState(false);
 	const [address, setAddress] = useState('');
-	const [ gameStatus, setGameStatus ] = useState(false);
+	const [gameStatus, setGameStatus] = useState(false);
 	const [port, setPort] = useState(0);
 
 	useEffect(() => {
@@ -61,14 +61,17 @@ function App() {
 			<div className="App-container">
 				<main>
 					<p>Lexogrine Auto Replay Generator</p>
+					<p>Replayer ID: {address}</p>
 					<p>
-						Replayer ID: {address} (
-						<span className={status ? 'online' : 'offline'}>{status ? 'online' : 'offline'}</span>)
+						LHM: <span className={status ? 'online' : 'offline'}>{status ? 'ONLINE' : 'OFFLINE'}</span>{' '}
+						GAME:{' '}
+						<span className={gameStatus ? 'online' : 'offline'}>{gameStatus ? 'ONLINE' : 'OFFLINE'}</span>
 					</p>
 					{port ? (
 						<>
-							<p>Run this command in CS:GO:</p>
-							<code>mirv_pgl url &quot;ws://localhost:{port}&quot;; mirv_pgl start;</code>
+							<p>
+								Run CS:GO or Dota 2 with <code>-netconport 2121</code> launch parameter
+							</p>
 						</>
 					) : null}
 				</main>

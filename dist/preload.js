@@ -1,10 +1,12 @@
 "use strict";
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
 };
 exports.__esModule = true;
 var electron_1 = require("electron");
@@ -14,7 +16,7 @@ electron_1.contextBridge.exposeInMainWorld('ipcApi', {
         for (var _i = 1; _i < arguments.length; _i++) {
             data[_i - 1] = arguments[_i];
         }
-        electron_1.ipcRenderer.send.apply(electron_1.ipcRenderer, __spreadArrays([channel], data));
+        electron_1.ipcRenderer.send.apply(electron_1.ipcRenderer, __spreadArray([channel], data, false));
     },
     on: function (channel, func) {
         electron_1.ipcRenderer.on(channel, function (event) {

@@ -21,7 +21,7 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
 	const ip = internalIp.v4.sync();
 	const server = new SimpleWebSocketServer({ port });
 
-	const arg = new ARGQueue();
+	const arg = new ARGQueue(win);
 
 	/*ipcMain.on('switchToPlayer', (ev, name: string) => {
 		arg.swapToPlayer({ name });
@@ -41,7 +41,7 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
 			argConfig.postTime = safeBand.postTime;
 			socketId = socket;
 			isConnected = true;
-			win.webContents.send('status', true, arg.netConPort.socket?.native.readyState === "open");
+			win.webContents.send('status', true, arg.netConPort.socket?.native.readyState === 'open');
 			socket.send('registered');
 
 			socket.send('ntpPing', Date.now());
@@ -80,7 +80,7 @@ export const startWebSocketServer = async (win: BrowserWindow) => {
 				offset = 0;
 				isConnected = false;
 
-				win.webContents.send('status', false, arg.netConPort.socket?.native.readyState === "open");
+				win.webContents.send('status', false, arg.netConPort.socket?.native.readyState === 'open');
 			}
 		});
 	});

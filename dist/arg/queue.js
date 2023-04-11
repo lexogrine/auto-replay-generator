@@ -21,7 +21,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -42,12 +42,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
 };
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -145,14 +147,20 @@ var isKillWorthShowing = function (kill, allKills) {
     return false;
 };
 var ARGQueue = /** @class */ (function () {
-    function ARGQueue(server) {
+    function ARGQueue(win) {
         var _this = this;
         this.swapToPlayer = function (player) {
+            if (player.game === 'dota2') {
+                if (!player.steamid)
+                    return;
+                _this.netConPort.execute("dota_spectator_mode 1; dota_spectator_hero_index ".concat(player.steamid, "; dota_spectator_mode 2"));
+                return;
+            }
             if (player.steamid) {
-                _this.pgl.execute("spec_player_by_accountid " + player.steamid);
+                _this.netConPort.execute("spec_player_by_accountid ".concat(player.steamid));
             }
             else if (player.name) {
-                _this.pgl.execute("spec_player_by_name " + player.name);
+                _this.netConPort.execute("spec_player_by_name ".concat(player.name));
             }
         };
         this.generateSwap = function (kill, prev, next) {
@@ -165,10 +173,10 @@ var ARGQueue = /** @class */ (function () {
             }
             var timeout = setTimeout(function () {
                 if (kill.weapon === 'hegrenade' && kill.victim) {
-                    _this.swapToPlayer({ steamid: kill.victim });
+                    _this.swapToPlayer({ steamid: kill.victim, game: kill.game });
                 }
                 else {
-                    _this.swapToPlayer({ steamid: kill.killer });
+                    _this.swapToPlayer({ steamid: kill.killer, game: kill.game });
                 }
             }, timeToSwitch);
             var timeouts = [timeout];
@@ -284,13 +292,13 @@ var ARGQueue = /** @class */ (function () {
         }); };
         this.add = function (kills) {
             var nowTime = Date.now();
-            var allKills = __spreadArrays(_this.kills, kills).filter(function (kill) { return kill.timestamp - 2000 >= nowTime; });
+            var allKills = __spreadArray(__spreadArray([], _this.kills, true), kills, true).filter(function (kill) { return kill.timestamp - 2000 >= nowTime; });
             _this.kills = allKills;
             _this.regenerate();
         };
         this.kills = [];
         this.swaps = [];
-        this.pgl = new hlae_1.MIRVPGL(server);
+        this.netConPort = new hlae_1.NetConPort(win);
         this.isPlayingNow = false;
         this.isRecordingNow = false;
         this.playAfterRecording = false;

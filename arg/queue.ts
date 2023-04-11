@@ -6,10 +6,9 @@
  * 3. Schedule observing
  */
 
-import { SimpleWebSocketServer } from 'simple-websockets-server';
 import { NetConPort } from './hlae';
 import { Connection } from 'node-vmix';
-import { app } from 'electron';
+import { BrowserWindow, app } from 'electron';
 import path from 'path';
 import fs from 'fs';
 
@@ -60,7 +59,7 @@ export interface ARGKillEntry {
 	name: string;
 	teamkill: boolean;
 	headshot: boolean;
-	game: "csgo" | "dota2"
+	game: 'csgo' | 'dota2';
 }
 
 export interface Swap {
@@ -143,23 +142,24 @@ export class ARGQueue {
 
 	private isRecordingNow: boolean;
 	private isPlayingNow: boolean;
-
 	private playAfterRecording: boolean;
 
-	constructor() {
+	constructor(win: BrowserWindow) {
 		this.kills = [];
 		this.swaps = [];
-		this.netConPort = new NetConPort();
+		this.netConPort = new NetConPort(win);
 
 		this.isPlayingNow = false;
 		this.isRecordingNow = false;
 		this.playAfterRecording = false;
 	}
 
-	swapToPlayer = (player: { steamid?: string; name?: string, game: ARGKillEntry["game"] }) => {
-		if(player.game === 'dota2'){
-			if(!player.steamid) return;
-			this.netConPort.execute(`dota_spectator_mode 1; dota_spectator_hero_index ${player.steamid}; dota_spectator_mode 2`)
+	swapToPlayer = (player: { steamid?: string; name?: string; game: ARGKillEntry['game'] }) => {
+		if (player.game === 'dota2') {
+			if (!player.steamid) return;
+			this.netConPort.execute(
+				`dota_spectator_mode 1; dota_spectator_hero_index ${player.steamid}; dota_spectator_mode 2`
+			);
 			return;
 		}
 		if (player.steamid) {
