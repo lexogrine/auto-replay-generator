@@ -14,15 +14,15 @@ var NetConPort = /** @class */ (function () {
             var _a, _b, _c;
             if (!((_a = _this.socket) === null || _a === void 0 ? void 0 : _a.telnet))
                 return;
-            if (((_b = _this.socket) === null || _b === void 0 ? void 0 : _b.native.readyState) === "open") {
+            if (((_b = _this.socket) === null || _b === void 0 ? void 0 : _b.native.readyState) === 'open') {
                 (_c = _this.socket) === null || _c === void 0 ? void 0 : _c.telnet.write("echo KOMENDA\n");
             }
             else {
-                console.log("COMMAND FAILED");
+                console.log('COMMAND FAILED');
             }
         };
         this.cleanUpAndReconnect = function () {
-            console.log("Reconnection initiating");
+            console.log('Reconnection initiating');
             _this.socket = null;
             setTimeout(_this.connectToTelnet, 2000);
         };
@@ -30,25 +30,25 @@ var NetConPort = /** @class */ (function () {
             if (_this.socket)
                 return;
             try {
-                var socket = net_1["default"].createConnection(2121, "127.0.0.1");
+                var socket = net_1["default"].createConnection(2121, '127.0.0.1');
                 var telnetSocket = new telnet_stream_1.TelnetSocket(socket);
                 _this.socket = { telnet: telnetSocket, native: socket };
-                socket.on("connect", function () {
+                socket.on('connect', function () {
                     var _a;
-                    _this.win.webContents.send('status', server_1.isConnected, ((_a = _this.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === "open");
+                    _this.win.webContents.send('status', server_1.isConnected, ((_a = _this.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === 'open');
                 });
-                socket.on("error", function () {
-                    console.log("ERROR");
+                socket.on('error', function () {
+                    console.log('ERROR');
                 });
-                socket.on("close", function () {
+                socket.on('close', function () {
                     var _a;
-                    console.log("CLOSE");
-                    _this.win.webContents.send('status', server_1.isConnected, ((_a = _this.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === "open");
+                    console.log('CLOSE');
+                    _this.win.webContents.send('status', server_1.isConnected, ((_a = _this.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === 'open');
                     _this.cleanUpAndReconnect();
                 });
             }
             catch (e) {
-                console.log("REDOING someting");
+                console.log('REDOING someting');
                 setTimeout(_this.connectToTelnet, 2000);
             }
         };

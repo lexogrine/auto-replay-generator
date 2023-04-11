@@ -59,6 +59,7 @@ export interface ARGKillEntry {
 	name: string;
 	teamkill: boolean;
 	headshot: boolean;
+	specId: number;
 	game: 'csgo' | 'dota2';
 }
 
@@ -135,6 +136,8 @@ const isKillWorthShowing = (kill: ARGKillEntry, allKills: ARGKillEntry[]) => {
 	return false;
 };
 
+const ks = require('node-key-sender');
+
 export class ARGQueue {
 	private kills: ARGKillEntry[];
 	private swaps: Swap[];
@@ -154,12 +157,15 @@ export class ARGQueue {
 		this.playAfterRecording = false;
 	}
 
-	swapToPlayer = (player: { steamid?: string; name?: string; game: ARGKillEntry['game'] }) => {
+	swapToPlayer = (player: { steamid?: string; name?: string; game: ARGKillEntry['game']; specKey?: string }) => {
 		if (player.game === 'dota2') {
-			if (!player.steamid) return;
-			this.netConPort.execute(
+			if (!player.specKey) return;
+			//console.log(ks);
+			console.log('SPEC', player.specKey);
+			ks.sendKey(`${player.specKey}`);
+			/*this.netConPort.execute(
 				`dota_spectator_mode 1; dota_spectator_hero_index ${player.steamid}; dota_spectator_mode 2`
-			);
+			);*/
 			return;
 		}
 		if (player.steamid) {
@@ -178,13 +184,17 @@ export class ARGQueue {
 			const timeToKillPrev = prev.timestamp - currentTime;
 
 			timeToSwitch = (timeToKill + timeToKillPrev) / 2;
+
+			if (kill.game === 'dota2') {
+				timeToSwitch -= 200;
+			}
 		}
 
 		const timeout = setTimeout(() => {
 			if (kill.weapon === 'hegrenade' && kill.victim) {
 				this.swapToPlayer({ steamid: kill.victim, game: kill.game });
 			} else {
-				this.swapToPlayer({ steamid: kill.killer, game: kill.game });
+				this.swapToPlayer({ steamid: kill.killer, game: kill.game, specKey: `${kill.specId}` });
 			}
 		}, timeToSwitch);
 

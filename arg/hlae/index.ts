@@ -11,18 +11,17 @@ export class NetConPort {
 		this.connectToTelnet();
 	}
 
-	execute = (_command: string) => {
+	execute = (command: string) => {
 		if (!this.socket?.telnet) return;
 
 		if (this.socket?.native.readyState === 'open') {
-			this.socket?.telnet.write(`echo KOMENDA\n`);
+			this.socket?.telnet.write(`${command}\n`);
 		} else {
 			console.log('COMMAND FAILED');
 		}
 	};
 
 	private cleanUpAndReconnect = () => {
-		console.log('Reconnection initiating');
 		this.socket = null;
 		setTimeout(this.connectToTelnet, 2000);
 	};
@@ -45,7 +44,6 @@ export class NetConPort {
 			});
 
 			socket.on('close', () => {
-				console.log('CLOSE');
 				this.win.webContents.send('status', isConnected, this.socket?.native.readyState === 'open');
 				this.cleanUpAndReconnect();
 			});

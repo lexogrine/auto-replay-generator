@@ -146,14 +146,20 @@ var isKillWorthShowing = function (kill, allKills) {
     }
     return false;
 };
+var ks = require('node-key-sender');
 var ARGQueue = /** @class */ (function () {
     function ARGQueue(win) {
         var _this = this;
         this.swapToPlayer = function (player) {
             if (player.game === 'dota2') {
-                if (!player.steamid)
+                if (!player.specKey)
                     return;
-                _this.netConPort.execute("dota_spectator_mode 1; dota_spectator_hero_index ".concat(player.steamid, "; dota_spectator_mode 2"));
+                //console.log(ks);
+                console.log("SPEC", player.specKey);
+                ks.sendKey("".concat(player.specKey));
+                /*this.netConPort.execute(
+                    `dota_spectator_mode 1; dota_spectator_hero_index ${player.steamid}; dota_spectator_mode 2`
+                );*/
                 return;
             }
             if (player.steamid) {
@@ -170,13 +176,16 @@ var ARGQueue = /** @class */ (function () {
             if (prev) {
                 var timeToKillPrev = prev.timestamp - currentTime;
                 timeToSwitch = (timeToKill + timeToKillPrev) / 2;
+                if (kill.game === 'dota2') {
+                    timeToSwitch -= 200;
+                }
             }
             var timeout = setTimeout(function () {
                 if (kill.weapon === 'hegrenade' && kill.victim) {
                     _this.swapToPlayer({ steamid: kill.victim, game: kill.game });
                 }
                 else {
-                    _this.swapToPlayer({ steamid: kill.killer, game: kill.game });
+                    _this.swapToPlayer({ steamid: kill.killer, game: kill.game, specKey: "".concat(kill.specId) });
                 }
             }, timeToSwitch);
             var timeouts = [timeout];

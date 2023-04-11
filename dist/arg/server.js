@@ -71,7 +71,7 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                 queue_1.argConfig.postTime = safeBand.postTime;
                 socketId = socket;
                 exports.isConnected = true;
-                win.webContents.send('status', true, ((_a = arg.netConPort.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === "open");
+                win.webContents.send('status', true, ((_a = arg.netConPort.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === 'open');
                 socket.send('registered');
                 socket.send('ntpPing', Date.now());
             });
@@ -101,7 +101,7 @@ var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, voi
                 if (socketId === socket) {
                     offset = 0;
                     exports.isConnected = false;
-                    win.webContents.send('status', false, ((_a = arg.netConPort.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === "open");
+                    win.webContents.send('status', false, ((_a = arg.netConPort.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === 'open');
                 }
             });
         });
