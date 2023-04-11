@@ -10,19 +10,18 @@ var server_1 = require("../server");
 var NetConPort = /** @class */ (function () {
     function NetConPort(win) {
         var _this = this;
-        this.execute = function (_command) {
+        this.execute = function (command) {
             var _a, _b, _c;
             if (!((_a = _this.socket) === null || _a === void 0 ? void 0 : _a.telnet))
                 return;
             if (((_b = _this.socket) === null || _b === void 0 ? void 0 : _b.native.readyState) === 'open') {
-                (_c = _this.socket) === null || _c === void 0 ? void 0 : _c.telnet.write("echo KOMENDA\n");
+                (_c = _this.socket) === null || _c === void 0 ? void 0 : _c.telnet.write("".concat(command, "\n"));
             }
             else {
                 console.log('COMMAND FAILED');
             }
         };
         this.cleanUpAndReconnect = function () {
-            console.log('Reconnection initiating');
             _this.socket = null;
             setTimeout(_this.connectToTelnet, 2000);
         };
@@ -38,11 +37,10 @@ var NetConPort = /** @class */ (function () {
                     _this.win.webContents.send('status', server_1.isConnected, ((_a = _this.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === 'open');
                 });
                 socket.on('error', function () {
-                    console.log('ERROR');
+                    //console.log('ERROR');
                 });
                 socket.on('close', function () {
                     var _a;
-                    console.log('CLOSE');
                     _this.win.webContents.send('status', server_1.isConnected, ((_a = _this.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === 'open');
                     _this.cleanUpAndReconnect();
                 });

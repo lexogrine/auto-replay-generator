@@ -160,8 +160,6 @@ export class ARGQueue {
 	swapToPlayer = (player: { steamid?: string; name?: string; game: ARGKillEntry['game']; specKey?: string }) => {
 		if (player.game === 'dota2') {
 			if (!player.specKey) return;
-			//console.log(ks);
-			console.log('SPEC', player.specKey);
 			ks.sendKey(`${player.specKey}`);
 			/*this.netConPort.execute(
 				`dota_spectator_mode 1; dota_spectator_hero_index ${player.steamid}; dota_spectator_mode 2`

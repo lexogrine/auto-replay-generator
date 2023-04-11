@@ -40,7 +40,7 @@ export class NetConPort {
 			});
 
 			socket.on('error', () => {
-				console.log('ERROR');
+				//console.log('ERROR');
 			});
 
 			socket.on('close', () => {
