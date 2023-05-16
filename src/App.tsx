@@ -64,8 +64,6 @@ function App() {
 					<p>Replayer ID: {address}</p>
 					<p>
 						LHM: <span className={status ? 'online' : 'offline'}>{status ? 'ONLINE' : 'OFFLINE'}</span>{' '}
-						GAME:{' '}
-						<span className={gameStatus ? 'online' : 'offline'}>{gameStatus ? 'ONLINE' : 'OFFLINE'}</span>
 					</p>
 					{port ? (
 						<>

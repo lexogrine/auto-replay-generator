@@ -1,7 +1,13 @@
 import React from 'react';
 import { Tooltip } from 'reactstrap';
 
-export default class Tip extends React.Component<{ id: string; className?: string; label: any; link?: string }> {
+export default class Tip extends React.Component<{
+	id: string;
+	className?: string;
+	label: any;
+	link?: string;
+	children: any;
+}> {
 	state = {
 		isOpen: false
 	};

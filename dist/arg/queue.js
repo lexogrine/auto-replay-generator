@@ -155,7 +155,7 @@ var ARGQueue = /** @class */ (function () {
                 if (!player.specKey)
                     return;
                 //console.log(ks);
-                console.log("SPEC", player.specKey);
+                //console.log('SPEC', player.specKey);
                 ks.sendKey("".concat(player.specKey));
                 /*this.netConPort.execute(
                     `dota_spectator_mode 1; dota_spectator_hero_index ${player.steamid}; dota_spectator_mode 2`

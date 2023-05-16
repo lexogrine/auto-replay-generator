@@ -22,6 +22,7 @@ export class NetConPort {
 	};
 
 	private cleanUpAndReconnect = () => {
+		this.socket?.native.removeAllListeners();
 		this.socket = null;
 		setTimeout(this.connectToTelnet, 2000);
 	};
@@ -40,7 +41,7 @@ export class NetConPort {
 			});
 
 			socket.on('error', () => {
-				console.log('ERROR');
+				//console.log('ERROR');
 			});
 
 			socket.on('close', () => {
@@ -48,7 +49,7 @@ export class NetConPort {
 				this.cleanUpAndReconnect();
 			});
 		} catch (e) {
-			console.log('REDOING someting');
+			//console.log('REDOING someting');
 			setTimeout(this.connectToTelnet, 2000);
 		}
 	};
