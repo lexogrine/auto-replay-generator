@@ -1,95 +1,56 @@
-import WebSocket from 'ws';
-import BufferReader from './BufferReader';
-import { SimpleWebSocketServer } from 'simple-websockets-server';
-import GameEventUnserializer from './GameEventUnserializer';
-
-export class MIRVPGL {
-	socket: WebSocket | null;
-	constructor(server: SimpleWebSocketServer) {
+import { BrowserWindow } from 'electron';
+import net from 'net';
+import { TelnetSocket } from 'telnet-stream';
+import { isConnected } from '../server';
+export class NetConPort {
+	socket: { telnet: TelnetSocket; native: net.Socket } | null;
+	win: BrowserWindow;
+	constructor(win: BrowserWindow) {
 		this.socket = null;
-
-		this.init(server);
+		this.win = win;
+		this.connectToTelnet();
 	}
 
-	execute = (config: string) => {
-		if (!this.socket) return;
-		this.socket.send(new Uint8Array(Buffer.from(`exec\0${config}\0`, 'utf8')), { binary: true });
+	execute = (command: string) => {
+		if (!this.socket?.telnet) return;
+
+		if (this.socket?.native.readyState === 'open') {
+			this.socket?.telnet.write(`${command}\n`);
+		} else {
+			console.log('COMMAND FAILED');
+		}
 	};
 
-	private init = async (server: SimpleWebSocketServer) => {
-		const enrichments = {
-			player_death: ['userid', 'attacker', 'assister']
-		};
+	private cleanUpAndReconnect = () => {
+		this.socket?.native.removeAllListeners();
+		this.socket = null;
+		setTimeout(this.connectToTelnet, 2000);
+	};
 
-		server.onConnection(simpleSocket => {
-			const newSocket = simpleSocket._socket as WebSocket;
+	private connectToTelnet = () => {
+		if (this.socket) return;
 
-			const socket = newSocket;
+		try {
+			const socket = net.createConnection(2121, '127.0.0.1');
+			const telnetSocket = new TelnetSocket(socket);
 
-			if (!socket) return;
+			this.socket = { telnet: telnetSocket, native: socket };
 
-			const gameEventUnserializer = new GameEventUnserializer(enrichments);
-
-			socket.on('message', data => {
-				if (!(data instanceof Buffer)) {
-					return;
-				}
-				if (this.socket !== socket) {
-					if (this.socket) this.socket.close();
-					this.socket = socket;
-				}
-				const bufferReader = new BufferReader(Buffer.from(data));
-				try {
-					while (!bufferReader.eof()) {
-						const cmd = bufferReader.readCString();
-						if (cmd !== 'hello' && cmd !== 'gameEvent') {
-							return;
-						}
-						if (cmd === 'hello') {
-							const version = bufferReader.readUInt32LE();
-							if (2 != version) throw 'Error: version mismatch';
-							socket.send(new Uint8Array(Buffer.from('transBegin\0', 'utf8')), { binary: true });
-							socket.send(
-								new Uint8Array(Buffer.from('exec\0mirv_pgl events enrich clientTime 1\0', 'utf8')),
-								{ binary: true }
-							);
-							socket.send(
-								new Uint8Array(
-									Buffer.from(
-										'exec\0mirv_pgl events enrich eventProperty "useridWithSteamId" "player_death" "userid"\0',
-										'utf8'
-									)
-								),
-								{ binary: true }
-							);
-							socket.send(
-								new Uint8Array(
-									Buffer.from(
-										'exec\0mirv_pgl events enrich eventProperty "useridWithSteamId" "player_death" "attacker"\0',
-										'utf8'
-									)
-								),
-								{ binary: true }
-							);
-							socket.send(
-								new Uint8Array(
-									Buffer.from(
-										'exec\0mirv_pgl events enrich eventProperty "useridWithSteamId" "player_death" "assister"\0',
-										'utf8'
-									)
-								),
-								{ binary: true }
-							);
-							socket.send(new Uint8Array(Buffer.from('exec\0mirv_pgl events enabled 1\0', 'utf8')), {
-								binary: true
-							});
-							socket.send(new Uint8Array(Buffer.from('transEnd\0', 'utf8')), { binary: true });
-							return;
-						}
-						gameEventUnserializer.unserialize(bufferReader);
-					}
-				} catch (err) {}
+			socket.on('connect', () => {
+				this.win.webContents.send('status', isConnected, this.socket?.native.readyState === 'open');
 			});
-		});
+
+			socket.on('error', () => {
+				//console.log('ERROR');
+			});
+
+			socket.on('close', () => {
+				this.win.webContents.send('status', isConnected, this.socket?.native.readyState === 'open');
+				this.cleanUpAndReconnect();
+			});
+		} catch (e) {
+			//console.log('REDOING someting');
+			setTimeout(this.connectToTelnet, 2000);
+		}
 	};
 }

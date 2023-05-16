@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -41,75 +41,71 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 exports.__esModule = true;
 exports.startWebSocketServer = exports.isConnected = void 0;
 var simple_websockets_server_1 = require("simple-websockets-server");
-var get_port_1 = __importDefault(require("get-port"));
 var internal_ip_1 = __importDefault(require("internal-ip"));
 var queue_1 = require("./queue");
-var electron_1 = require("electron");
 exports.isConnected = false;
 var socketId = null;
 var offset = 0;
 var startWebSocketServer = function (win) { return __awaiter(void 0, void 0, void 0, function () {
     var port, ip, server, arg;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, get_port_1["default"]({ port: [1300, 1302, 1304, 1305, 1310] })];
-            case 1:
-                port = _a.sent();
-                ip = internal_ip_1["default"].v4.sync();
-                server = new simple_websockets_server_1.SimpleWebSocketServer({ port: port });
-                arg = new queue_1.ARGQueue(server);
-                electron_1.ipcMain.on('switchToPlayer', function (ev, name) {
-                    arg.swapToPlayer({ name: name });
+        port = 1300;
+        ip = internal_ip_1["default"].v4.sync();
+        server = new simple_websockets_server_1.SimpleWebSocketServer({ port: port });
+        arg = new queue_1.ARGQueue(win);
+        /*ipcMain.on('switchToPlayer', (ev, name: string) => {
+            arg.swapToPlayer({ name });
+        });*/
+        server.onConnection(function (socket) {
+            socket.on('register', function (order, saveClips, safeBand) {
+                var _a;
+                if (exports.isConnected) {
+                    socket._socket.close();
+                    return;
+                }
+                if (order && Array.isArray(order)) {
+                    queue_1.argConfig.order = order;
+                }
+                queue_1.argConfig.saveClips = !!saveClips;
+                queue_1.argConfig.preTime = safeBand.preTime;
+                queue_1.argConfig.postTime = safeBand.postTime;
+                socketId = socket;
+                exports.isConnected = true;
+                win.webContents.send('status', true, ((_a = arg.netConPort.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === 'open');
+                socket.send('registered');
+                socket.send('ntpPing', Date.now());
+            });
+            socket.on('ntpPong', function (t1, t2, t3) {
+                var t4 = Date.now();
+                offset = (t2 - t1 + (t3 - t4)) / 2;
+            });
+            socket.on('kills', function (kills) {
+                kills.forEach(function (kill) {
+                    kill.timestamp -= offset;
                 });
-                server.onConnection(function (socket) {
-                    socket.on('register', function (order, saveClips, safeBand) {
-                        if (exports.isConnected) {
-                            socket._socket.close();
-                            return;
-                        }
-                        if (order && Array.isArray(order)) {
-                            queue_1.argConfig.order = order;
-                        }
-                        queue_1.argConfig.saveClips = !!saveClips;
-                        queue_1.argConfig.preTime = safeBand.preTime;
-                        queue_1.argConfig.postTime = safeBand.postTime;
-                        socketId = socket;
-                        exports.isConnected = true;
-                        win.webContents.send('argStatus', true);
-                        socket.send('registered');
-                        socket.send('ntpPing', Date.now());
-                    });
-                    socket.on('ntpPong', function (t1, t2, t3) {
-                        var t4 = Date.now();
-                        offset = (t2 - t1 + (t3 - t4)) / 2;
-                    });
-                    socket.on('kills', function (kills) {
-                        kills.forEach(function (kill) {
-                            kill.timestamp -= offset;
-                        });
-                        arg.add(kills);
-                    });
-                    socket.on('config', function (order, saveClips, safeBand) {
-                        queue_1.argConfig.order = order;
-                        queue_1.argConfig.saveClips = saveClips;
-                        queue_1.argConfig.preTime = safeBand.preTime;
-                        queue_1.argConfig.postTime = safeBand.postTime;
-                    });
-                    socket.on('saveClips', function (saveClips) {
-                        queue_1.argConfig.saveClips = saveClips;
-                    });
-                    socket.on('clearReplay', arg.clear);
-                    socket.on('showReplay', arg.show);
-                    socket.on('disconnect', function () {
-                        if (socketId === socket) {
-                            offset = 0;
-                            exports.isConnected = false;
-                            win.webContents.send('argStatus', false);
-                        }
-                    });
-                });
-                return [2 /*return*/, { ip: ip, port: port }];
-        }
+                arg.add(kills);
+            });
+            socket.on('config', function (order, saveClips, safeBand) {
+                queue_1.argConfig.order = order;
+                queue_1.argConfig.saveClips = saveClips;
+                queue_1.argConfig.preTime = safeBand.preTime;
+                queue_1.argConfig.postTime = safeBand.postTime;
+            });
+            socket.on('saveClips', function (saveClips) {
+                queue_1.argConfig.saveClips = saveClips;
+            });
+            socket.on('clearReplay', arg.clear);
+            socket.on('showReplay', arg.show);
+            socket.on('disconnect', function () {
+                var _a;
+                if (socketId === socket) {
+                    offset = 0;
+                    exports.isConnected = false;
+                    win.webContents.send('status', false, ((_a = arg.netConPort.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === 'open');
+                }
+            });
+        });
+        return [2 /*return*/, { ip: ip, port: port, arg: arg }];
     });
 }); };
 exports.startWebSocketServer = startWebSocketServer;

@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -80,14 +80,15 @@ var createMainWindow = function () { return __awaiter(void 0, void 0, void 0, fu
                     minHeight: 435,
                     width: 775
                 });
-                return [4 /*yield*/, server_1.startWebSocketServer(win)];
+                return [4 /*yield*/, (0, server_1.startWebSocketServer)(win)];
             case 1:
                 address = _a.sent();
                 electron_1.ipcMain.on('getAddress', function (ev) {
-                    ev.reply('address', address);
+                    ev.reply('address', { ip: address.ip, port: address.port });
                 });
                 electron_1.ipcMain.on('getStatus', function (ev) {
-                    ev.reply('status', server_1.isConnected);
+                    var _a;
+                    ev.reply('status', server_1.isConnected, ((_a = address.arg.netConPort.socket) === null || _a === void 0 ? void 0 : _a.native.readyState) === "open");
                 });
                 electron_1.ipcMain.on('min', function () {
                     win === null || win === void 0 ? void 0 : win.minimize();
@@ -110,7 +111,7 @@ var createMainWindow = function () { return __awaiter(void 0, void 0, void 0, fu
                 });
                 // win.setMenu(null);
                 win.setMenuBarVisibility(!exports.isDev);
-                win.loadURL(exports.isDev ? 'http://localhost:3023' : "file://" + __dirname + "/build/index.html");
+                win.loadURL(exports.isDev ? 'http://localhost:3023' : "file://".concat(__dirname, "/build/index.html"));
                 win.on('close', function () {
                     win = null;
                     electron_1.app.quit();

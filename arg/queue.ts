@@ -6,10 +6,9 @@
  * 3. Schedule observing
  */
 
-import { SimpleWebSocketServer } from 'simple-websockets-server';
-import { MIRVPGL } from './hlae';
+import { NetConPort } from './hlae';
 import { Connection } from 'node-vmix';
-import { app } from 'electron';
+import { BrowserWindow, app } from 'electron';
 import path from 'path';
 import fs from 'fs';
 
@@ -60,6 +59,8 @@ export interface ARGKillEntry {
 	name: string;
 	teamkill: boolean;
 	headshot: boolean;
+	specId: number;
+	game: 'csgo' | 'dota2';
 }
 
 export interface Swap {
@@ -135,31 +136,42 @@ const isKillWorthShowing = (kill: ARGKillEntry, allKills: ARGKillEntry[]) => {
 	return false;
 };
 
+const ks = require('node-key-sender');
+
 export class ARGQueue {
 	private kills: ARGKillEntry[];
 	private swaps: Swap[];
-	private pgl: MIRVPGL;
+	netConPort: NetConPort;
 
 	private isRecordingNow: boolean;
 	private isPlayingNow: boolean;
-
 	private playAfterRecording: boolean;
 
-	constructor(server: SimpleWebSocketServer) {
+	constructor(win: BrowserWindow) {
 		this.kills = [];
 		this.swaps = [];
-		this.pgl = new MIRVPGL(server);
+		this.netConPort = new NetConPort(win);
 
 		this.isPlayingNow = false;
 		this.isRecordingNow = false;
 		this.playAfterRecording = false;
 	}
 
-	swapToPlayer = (player: { steamid?: string; name?: string }) => {
+	swapToPlayer = (player: { steamid?: string; name?: string; game: ARGKillEntry['game']; specKey?: string }) => {
+		if (player.game === 'dota2') {
+			if (!player.specKey) return;
+			//console.log(ks);
+			//console.log('SPEC', player.specKey);
+			ks.sendKey(`${player.specKey}`);
+			/*this.netConPort.execute(
+				`dota_spectator_mode 1; dota_spectator_hero_index ${player.steamid}; dota_spectator_mode 2`
+			);*/
+			return;
+		}
 		if (player.steamid) {
-			this.pgl.execute(`spec_player_by_accountid ${player.steamid}`);
+			this.netConPort.execute(`spec_player_by_accountid ${player.steamid}`);
 		} else if (player.name) {
-			this.pgl.execute(`spec_player_by_name ${player.name}`);
+			this.netConPort.execute(`spec_player_by_name ${player.name}`);
 		}
 	};
 
@@ -172,13 +184,17 @@ export class ARGQueue {
 			const timeToKillPrev = prev.timestamp - currentTime;
 
 			timeToSwitch = (timeToKill + timeToKillPrev) / 2;
+
+			if (kill.game === 'dota2') {
+				timeToSwitch -= 200;
+			}
 		}
 
 		const timeout = setTimeout(() => {
 			if (kill.weapon === 'hegrenade' && kill.victim) {
-				this.swapToPlayer({ steamid: kill.victim });
+				this.swapToPlayer({ steamid: kill.victim, game: kill.game });
 			} else {
-				this.swapToPlayer({ steamid: kill.killer });
+				this.swapToPlayer({ steamid: kill.killer, game: kill.game, specKey: `${kill.specId}` });
 			}
 		}, timeToSwitch);
 
